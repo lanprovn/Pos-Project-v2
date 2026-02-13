@@ -1,0 +1,126 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  username  String   @unique
+  password  String   @default("123456") // Mật khẩu mặc định, nên hash thực tế
+  role      String   @default("staff") // "admin" | "staff"
+  pin       String?  // Mã PIN bảo mật (hashed)
+  avatar    String?
+  status    String   @default("active") // "active" | "inactive"
+  createdAt DateTime @default(now())
+  ShiftSession ShiftSession[]
+}
+
+model Category {
+  id      String    @id @default(cuid())
+  name    String    @unique
+  icon    String?
+  products Product[]
+}
+
+model Product {
+  id           String   @id @default(cuid())
+  name         String
+  price        Float
+  costPrice    Float?
+  sku          String?  @unique
+  barcode      String?  @unique
+  categoryName String
+  category     Category @relation(fields: [categoryName], references: [name])
+  image        String
+  stock        Int      @default(0)
+  description  String?
+  options      Json?    // Array of ProductOption structure
+  unit         String?  @default("Món")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Customer {
+  id         String   @id @default(cuid())
+  name       String
+  phone      String   @unique
+  points     Int      @default(0)
+  tier       String   @default("Silver") // "Silver" | "Gold" | "Diamond"
+  totalSpent Float    @default(0)
+  createdAt  DateTime @default(now())
+  orders     Order[]
+}
+
+model Order {
+  id                String       @id @default(cuid())
+  items             Json         // Lưu list CartItem[]
+  total             Float
+  subtotal          Float
+  discount          Float
+  date              DateTime     @default(now())
+  status            String       @default("completed") // "completed" | "refunded" | "cancelled"
+  cancellationReason String?
+  cancelledAt       DateTime?
+  cancelledBy       String?
+  fulfillmentStatus String       @default("pending")   // "pending" | "preparing" | "ready" | "delivered"
+  paymentMethod     String       @default("cash")      // "cash" | "transfer" | "card"
+  diningOption      String       @default("dine-in")   // "dine-in" | "take-away" | "delivery"
+  customerId        String?
+  customer          Customer?    @relation(fields: [customerId], references: [id])
+  tableId           String?
+  table             Table?       @relation(fields: [tableId], references: [id])
+}
+
+model Table {
+  id            String   @id @default(cuid())
+  number        Int      @unique
+  name          String?  // Ví dụ: "Bàn 1"
+  status        String   @default("available") // "available" | "occupied" | "reserved"
+  parentTableId String?  // ID của bàn chính (nếu đang được gộp vào bàn khác)
+  orders        Order[]
+  heldOrders    HeldOrder[]
+}
+
+model Promotion {
+  id            String   @id @default(cuid())
+  code          String   @unique
+  name          String
+  type          String   // "percentage" | "fixed"
+  value         Float
+  minOrderValue Float    @default(0)
+  description   String?
+  isActive      Boolean  @default(true)
+  startTime     String?  // Happy Hour (e.g., "14:00")
+  endTime       String?  // Happy Hour (e.g., "17:00")
+}
+
+model ShiftSession {
+  id          String    @id @default(cuid())
+  staffId     String
+  staff       User      @relation(fields: [staffId], references: [id])
+  staffName   String
+  startTime   DateTime  @default(now())
+  endTime     DateTime?
+  initialCash Float
+  totalSales  Float     @default(0)
+  actualCash  Float?
+  difference  Float?
+  status      String    @default("open") // "open" | "closed"
+}
+
+model HeldOrder {
+  id           String   @id @default(cuid())
+  customerName String?
+  items        Json     // Lưu list CartItem[]
+  diningOption String
+  discount     Float
+  subtotal     Float
+  total        Float
+  createdAt    DateTime @default(now())
+  tableId      String?
+  table        Table?   @relation(fields: [tableId], references: [id])
+}

@@ -1,0 +1,73 @@
+
+> pos-app@0.1.0 lint
+> eslint
+
+
+/Users/ngoclan/Documents/Web-Project/pos-app/scripts/generate_seed_data.js
+   1:12  error    A `require()` style import is forbidden                                            @typescript-eslint/no-require-imports
+   2:14  error    A `require()` style import is forbidden                                            @typescript-eslint/no-require-imports
+  26:9   error    'displayName' is never reassigned. Use 'const' instead                             prefer-const
+  62:1   warning  Unexpected console statement. Only these console methods are allowed: warn, error  no-console
+
+/Users/ngoclan/Documents/Web-Project/pos-app/src/app/actions/auth.ts
+  18:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  57:46  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  77:58  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/ngoclan/Documents/Web-Project/pos-app/src/app/actions/order.ts
+  112:14  error    'error' is defined but never used                                                  @typescript-eslint/no-unused-vars
+  173:9   warning  Unexpected console statement. Only these console methods are allowed: warn, error  no-console
+  174:92  error    Unexpected any. Specify a different type                                           @typescript-eslint/no-explicit-any
+  178:9   warning  Unexpected console statement. Only these console methods are allowed: warn, error  no-console
+  185:13  warning  Unexpected console statement. Only these console methods are allowed: warn, error  no-console
+  188:9   warning  Unexpected console statement. Only these console methods are allowed: warn, error  no-console
+  213:21  error    Unexpected any. Specify a different type                                           @typescript-eslint/no-explicit-any
+  221:96  error    Unexpected any. Specify a different type                                           @typescript-eslint/no-explicit-any
+  222:96  error    Unexpected any. Specify a different type                                           @typescript-eslint/no-explicit-any
+  240:55  error    Unexpected any. Specify a different type                                           @typescript-eslint/no-explicit-any
+  240:88  error    Unexpected any. Specify a different type                                           @typescript-eslint/no-explicit-any
+  294:38  error    Unexpected any. Specify a different type                                           @typescript-eslint/no-explicit-any
+  309:13  warning  Unexpected console statement. Only these console methods are allowed: warn, error  no-console
+  310:94  error    Unexpected any. Specify a different type                                           @typescript-eslint/no-explicit-any
+  313:13  warning  Unexpected console statement. Only these console methods are allowed: warn, error  no-console
+  321:17  warning  Unexpected console statement. Only these console methods are allowed: warn, error  no-console
+  328:17  warning  Unexpected console statement. Only these console methods are allowed: warn, error  no-console
+  338:13  warning  Unexpected console statement. Only these console methods are allowed: warn, error  no-console
+  343:9   warning  Unexpected console statement. Only these console methods are allowed: warn, error  no-console
+  345:21  error    Unexpected any. Specify a different type                                           @typescript-eslint/no-explicit-any
+
+/Users/ngoclan/Documents/Web-Project/pos-app/src/app/actions/report.ts
+  66:41  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/ngoclan/Documents/Web-Project/pos-app/src/app/dashboard/page.tsx
+  47:65  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/ngoclan/Documents/Web-Project/pos-app/src/app/users/page.tsx
+  21:53  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/ngoclan/Documents/Web-Project/pos-app/src/components/inventory/ProductForm.tsx
+  14:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  15:34  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  98:67  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/ngoclan/Documents/Web-Project/pos-app/src/components/pos/DailyReportModal.tsx
+  61:13  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/ngoclan/Documents/Web-Project/pos-app/src/components/pos/DailyReportModal.tsx:61:13
+  59 |     useEffect(() => {
+  60 |         if (isOpen) {
+> 61 |             handleFetchReport();
+     |             ^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  62 |             setActiveTab('summary');
+  63 |         }
+  64 |     }, [isOpen, handleFetchReport]);  react-hooks/set-state-in-effect
+
+✖ 34 problems (23 errors, 11 warnings)
+  1 error and 0 warnings potentially fixable with the `--fix` option.
+
