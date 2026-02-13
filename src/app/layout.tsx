@@ -16,13 +16,19 @@ export const metadata: Metadata = {
   title: "Lân POS",
   description: "Phần mềm quản lý bán hàng chuyên nghiệp",
   manifest: "/manifest.json",
-  themeColor: "#ef4444",
-  viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
     title: "Lân POS",
   },
+};
+
+export const viewport = {
+  themeColor: "#ef4444",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({
