@@ -36,13 +36,8 @@ export default function DashboardPage() {
             ]);
 
             if (orderRes.success) setOrders(orderRes.orders as unknown as Order[]);
-            if (prodRes.success) {
-                interface DBProduct { categoryName: string;[key: string]: unknown }
-                const mappedProducts: Product[] = (prodRes.products as unknown as DBProduct[]).map(p => ({
-                    ...(p as unknown as Product),
-                    category: p.categoryName || 'Other'
-                }));
-                setProducts(mappedProducts);
+            if (prodRes.success && prodRes.products) {
+                setProducts(prodRes.products as unknown as Product[]);
             }
             if (userRes.success) setStaffList((userRes.users as any[]).map(u => ({ ...u, createdAt: new Date(u.createdAt).toISOString() })) as User[]);
         };

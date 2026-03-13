@@ -1,55 +1,32 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
+import { tableService } from "@/services/tableService";
 import { revalidatePath } from "next/cache";
+import { createSafeAction } from "@/lib/create-safe-action";
+import { emptySchema, updateTableStatusSchema, releaseTableGroupSchema } from "@/lib/validations";
 
-export async function getTables() {
-    try {
-        const tables = await prisma.table.findMany({
-            orderBy: { number: 'asc' }
-        });
-        return { success: true, data: tables };
-    } catch {
-        return { success: false, error: "Failed to fetch tables" };
+export const getTables = createSafeAction(
+    emptySchema,
+    async () => {
+        const tables = await tableService.getAllTables();
+        return { data: tables };
     }
-}
+);
 
-export async function updateTableStatus(id: string, status: string) {
-    try {
-        const table = await prisma.table.update({
-            where: { id },
-            data: { status }
-        });
+export const updateTableStatus = createSafeAction(
+    updateTableStatusSchema,
+    async ({ id, status }) => {
+        const table = await tableService.updateStatus(id, status);
         revalidatePath("/pos");
-        return { success: true, data: table };
-    } catch {
-        return { success: false, error: "Failed to update table status" };
+        return { data: table };
     }
-}
+);
 
-export async function releaseTableGroup(tableId: string) {
-    try {
-        const table = await prisma.table.findUnique({ where: { id: tableId } });
-        if (!table) return { success: false, error: "Bàn không tồn tại" };
-
-        const masterId = table.parentTableId || tableId;
-
-        await prisma.$transaction([
-            // Release the master table
-            prisma.table.update({
-                where: { id: masterId },
-                data: { status: 'available', parentTableId: null }
-            }),
-            // Release all children
-            prisma.table.updateMany({
-                where: { parentTableId: masterId },
-                data: { status: 'available', parentTableId: null }
-            })
-        ]);
-
+export const releaseTableGroup = createSafeAction(
+    releaseTableGroupSchema,
+    async ({ tableId }) => {
+        await tableService.releaseGroup(tableId);
         revalidatePath("/");
-        return { success: true };
-    } catch {
-        return { success: false, error: "Failed to release table group" };
+        return true;
     }
-}
+);

@@ -54,10 +54,10 @@ export function PaymentModal({ isOpen, onClose, subtotal, discount, totalAmount,
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-background w-full max-w-4xl h-[600px] rounded-3xl shadow-2xl overflow-hidden flex flex-row"
+                className="bg-background w-full max-w-6xl h-[100dvh] md:h-[min(90vh,700px)] rounded-none md:rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row"
             >
                 {/* Left Side: Summary */}
-                <div className="w-1/3 bg-secondary/30 p-8 flex flex-col border-r border-black/5">
+                <div className="w-full md:w-1/3 bg-secondary/30 p-4 md:p-8 flex flex-col border-b md:border-b-0 md:border-r border-black/5 shrink-0">
                     <h2 className="text-xl font-bold mb-6">Thanh toán</h2>
 
                     <div className="flex-1 space-y-4">
@@ -70,9 +70,11 @@ export function PaymentModal({ isOpen, onClose, subtotal, discount, totalAmount,
                                 <span className="text-muted-foreground">Giảm giá ({discount}%)</span>
                                 <span className="text-red-500">-{formatCurrency((subtotal * discount) / 100)}</span>
                             </div>
-                            <div className="pt-3 border-t border-black/5">
-                                <p className="text-xs text-muted-foreground mb-1 uppercase font-bold tracking-wider">Tổng cộng</p>
-                                <p className="text-3xl font-bold text-primary">{formatCurrency(totalAmount)}</p>
+                            <div className="pt-3 border-t border-black/5 flex justify-between items-end">
+                                <div>
+                                    <p className="text-[10px] text-muted-foreground mb-0.5 uppercase font-black tracking-widest">Tổng cộng</p>
+                                    <p className="text-2xl md:text-4xl font-black text-primary leading-none transition-all">{formatCurrency(totalAmount)}</p>
+                                </div>
                             </div>
                         </div>
 
@@ -137,7 +139,7 @@ export function PaymentModal({ isOpen, onClose, subtotal, discount, totalAmount,
                     </div>
 
                     {/* Checkbox Content */}
-                    <div className="flex-1 p-8 overflow-y-auto">
+                    <div className="flex-1 p-4 md:p-8 overflow-y-auto">
                         {paymentMethod === 'cash' ? (
                             mode === 'pos' ? (
                                 <div className="space-y-8 max-w-md mx-auto">

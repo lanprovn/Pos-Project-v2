@@ -7,15 +7,7 @@ import { Plus, Search } from "lucide-react";
 import { deleteProductAction } from "@/app/actions/product";
 import { useRouter } from "next/navigation";
 
-interface Product {
-    id: string;
-    name: string;
-    price: number;
-    categoryName: string;
-    image: string;
-    stock: number;
-    description?: string;
-}
+import type { Product } from "@/types/product";
 
 export default function ProductManagement({ initialProducts }: { initialProducts: Product[] }) {
     const router = useRouter();
@@ -32,7 +24,7 @@ export default function ProductManagement({ initialProducts }: { initialProducts
     // Filter products client-side for instant feedback
     const filteredProducts = products.filter(product => {
         const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesCategory = selectedCategory === "All" || product.categoryName === selectedCategory;
+        const matchesCategory = selectedCategory === "All" || product.category === selectedCategory;
         return matchesSearch && matchesCategory;
     });
 
@@ -47,7 +39,7 @@ export default function ProductManagement({ initialProducts }: { initialProducts
     };
 
     const handleDelete = async (id: string) => {
-        const result = await deleteProductAction(id);
+        const result = await deleteProductAction({ id });
         if (result.success) {
             // Optimistic update
             setProducts(products.filter(p => p.id !== id));

@@ -45,7 +45,7 @@ export const useAuthStore = create<AuthStore>()(
 );
 
 export const mockLogin = async (username: string, password: string): Promise<{ success: boolean; user?: User; error?: string }> => {
-    const res = await loginAction(username, password);
+    const res = await loginAction({ username, password });
     if (res.success && res.user) {
         if (res.user.status === 'inactive') return { success: false, error: 'Tài khoản này đã bị khóa' };
 
@@ -61,5 +61,5 @@ export const mockLogin = async (username: string, password: string): Promise<{ s
         return { success: true, user };
     }
 
-    return { success: false, error: res.error || 'Tên đăng nhập hoặc mật khẩu không đúng' };
+    return { success: false, error: !res.success ? res.error : 'Tên đăng nhập hoặc mật khẩu không đúng' };
 };

@@ -6,15 +6,7 @@ import { uploadImageAction } from "@/app/actions/upload";
 import Image from "next/image";
 import { Loader2, Upload, X } from "lucide-react";
 
-interface Product {
-    id: string;
-    name: string;
-    price: number;
-    categoryName: string;
-    image: string;
-    stock: number;
-    description?: string;
-}
+import type { Product } from "@/types/product";
 
 interface ProductFormProps {
     isOpen: boolean;
@@ -31,7 +23,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, onSuccess 
     const [formData, setFormData] = useState({
         name: "",
         price: "",
-        categoryName: "Coffee",
+        category: "Coffee",
         stock: "",
         description: "",
     });
@@ -43,7 +35,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, onSuccess 
             setFormData({
                 name: productToEdit.name,
                 price: productToEdit.price.toString(),
-                categoryName: productToEdit.categoryName,
+                category: productToEdit.category,
                 stock: productToEdit.stock.toString(),
                 description: productToEdit.description || "",
             });
@@ -54,7 +46,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, onSuccess 
     }, [productToEdit, isOpen]);
 
     const resetForm = () => {
-        setFormData({ name: "", price: "", categoryName: "Coffee", stock: "", description: "" });
+        setFormData({ name: "", price: "", category: "Coffee", stock: "", description: "" });
         setPreviewImage(null);
         setImageFile(null);
         if (fileInputRef.current) fileInputRef.current.value = "";
@@ -92,7 +84,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, onSuccess 
             const payload = {
                 name: formData.name,
                 price: parseFloat(formData.price),
-                category: formData.categoryName,
+                category: formData.category,
                 stock: parseInt(formData.stock),
                 description: formData.description,
                 image: imageUrl
@@ -100,7 +92,7 @@ export default function ProductForm({ isOpen, onClose, productToEdit, onSuccess 
 
             let result;
             if (productToEdit) {
-                result = await updateProductAction(productToEdit.id, payload);
+                result = await updateProductAction({ id: productToEdit.id, data: payload });
             } else {
                 result = await createProductAction(payload);
             }
@@ -177,8 +169,8 @@ export default function ProductForm({ isOpen, onClose, productToEdit, onSuccess 
                         <div className="space-y-2">
                             <label className="text-sm font-semibold text-gray-700">Danh mục</label>
                             <select
-                                value={formData.categoryName}
-                                onChange={(e) => setFormData({ ...formData, categoryName: e.target.value })}
+                                value={formData.category}
+                                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                                 className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-medium appearance-none bg-no-repeat bg-[right_1rem_center] bg-white text-gray-700"
                                 style={{
                                     backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,

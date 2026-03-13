@@ -10,7 +10,12 @@ import { useAuthStore } from "@/store/useAuthStore";
 import Image from "next/image";
 import { DailyReportModal } from "@/components/pos/DailyReportModal";
 
-export function Sidebar() {
+interface SidebarProps {
+    isOpenMobile?: boolean;
+    onCloseMobile?: () => void;
+}
+
+export function Sidebar({ isOpenMobile, onCloseMobile }: SidebarProps = {}) {
     const pathname = usePathname();
     const router = useRouter();
     const [isCollapsed, setIsCollapsed] = useState(false);
@@ -98,10 +103,24 @@ export function Sidebar() {
 
     return (
         <motion.aside
-            initial={{ width: 280 }}
-            animate={{ width: isCollapsed ? 80 : 280 }}
-            className="h-screen bg-white border-r border-black/5 flex flex-col relative z-20 shadow-xl shadow-black/5"
+            initial={false}
+            animate={{ 
+                width: isCollapsed ? 80 : 280,
+                x: (typeof window !== 'undefined' && window.innerWidth < 1024) ? (isOpenMobile ? 0 : -280) : 0
+            }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            className={cn(
+                "h-screen bg-white border-r border-black/5 flex flex-col fixed inset-y-0 left-0 lg:static z-50 shadow-xl lg:shadow-black/5 transition-all",
+                !isOpenMobile && "-translate-x-full lg:translate-x-0"
+            )}
         >
+            {/* Mobile Close Button */}
+            <button
+                onClick={onCloseMobile}
+                className="lg:hidden absolute -right-12 top-6 bg-white p-3 rounded-full shadow-lg border border-black/5"
+            >
+                <ChevronLeft size={24} />
+            </button>
             {/* Toggle Button */}
             <button
                 onClick={() => setIsCollapsed(!isCollapsed)}

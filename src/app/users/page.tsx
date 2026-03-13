@@ -64,7 +64,7 @@ export default function UsersPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (editingUser) {
-            await updateUserAction(editingUser.id, formData);
+            await updateUserAction({ id: editingUser.id, data: formData as any });
         } else {
             await createUserAction({
                 ...formData,
@@ -76,13 +76,13 @@ export default function UsersPage() {
     };
 
     const toggleStatus = async (user: User) => {
-        await updateUserAction(user.id, { ...user, status: user.status === 'active' ? 'inactive' : 'active' });
+        await updateUserAction({ id: user.id, data: { ...user, status: user.status === 'active' ? 'inactive' : 'active' } as any });
         await refreshUsers();
     };
 
     const handleDelete = async (id: string) => {
         if (confirm("Bạn có chắc chắn muốn xóa nhân viên này?")) {
-            await deleteUserAction(id);
+            await deleteUserAction({ id });
             await refreshUsers();
         }
     };

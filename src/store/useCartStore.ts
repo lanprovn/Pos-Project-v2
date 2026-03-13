@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { OptionValue, Product } from './useProductStore';
+import type { OptionValue, Product } from '@/types/product';
 
 export interface CartItem {
     id: string; // Product ID

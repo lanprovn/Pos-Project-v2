@@ -1,35 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import type { Product, ProductOption, OptionValue } from '@/types/product';
 
-export interface OptionValue {
-    id: string;
-    name: string;
-    price: number;
-}
-
-export interface ProductOption {
-    id: string;
-    name: string;
-    values: OptionValue[];
-    required: boolean;
-    multiple: boolean;
-    type?: 'single' | 'multiple';
-}
-
-export interface Product {
-    id: string;
-    name: string;
-    category: string;
-    price: number;
-    costPrice?: number;
-    sku?: string;
-    barcode?: string;
-    image: string;
-    stock: number;
-    unit?: string;
-    description?: string;
-    options?: ProductOption[];
-}
+export type { Product, ProductOption, OptionValue };
 
 interface ProductStore {
     products: Product[];

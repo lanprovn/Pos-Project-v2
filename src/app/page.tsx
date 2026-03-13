@@ -2,7 +2,7 @@
 
 import { useCartStore, type DiningOption } from "@/store/useCartStore";
 import { formatCurrency, cn } from "@/lib/utils";
-import { Plus, Minus, Trash2, Search, ShoppingCart, CreditCard, Edit3, MessageSquare, Utensils, ShoppingBag, ClipboardList, Save, History, X, Timer, ChevronRight, ArrowRightLeft, Combine, LogOut } from "lucide-react";
+import { Plus, Minus, Trash2, Search, ShoppingCart, CreditCard, Edit3, MessageSquare, Utensils, ShoppingBag, ClipboardList, Save, History, X, Timer, ChevronRight, ArrowRightLeft, Combine, LogOut, LayoutGrid } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -52,6 +52,8 @@ export default function POSPage() {
   const [isRecentOrdersDrawerOpen, setIsRecentOrdersDrawerOpen] = useState(false);
   const [activeOrderId, setActiveOrderId] = useState<string | null>(null);
   const [tableSelectionMode, setTableSelectionMode] = useState<'default' | 'move' | 'merge'>('default');
+  const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // Sync DB to Stores on Mount & Periodically
   useEffect(() => {
@@ -60,7 +62,7 @@ export default function POSPage() {
         setIsLoadingMain(true);
         const [prodRes, orderRes, heldRes, tableRes, catRes] = await Promise.all([
           getProducts(),
-          getOrders(20),
+          getOrders({ limit: 20 }),
           getHeldOrders(),
           getTables(),
           getCategories()
@@ -70,12 +72,8 @@ export default function POSPage() {
           setDbCategories(['All', ...catRes.categories.map((c: { name: string }) => c.name)]);
         }
 
-        if (prodRes.success) {
-          interface DBProduct { categoryName: string;[key: string]: unknown }
-          setProducts((prodRes.products as unknown as DBProduct[]).map(p => ({
-            ...(p as unknown as Product),
-            category: p.categoryName || 'Other'
-          })));
+        if (prodRes.success && prodRes.products) {
+          setProducts(prodRes.products as unknown as Product[]);
         }
         if (orderRes.success) setOrders(orderRes.orders as unknown as Order[]);
         if (heldRes.success) useHoldOrderStore.getState().setHeldOrders(heldRes.orders as unknown as HeldOrder[]);
@@ -88,7 +86,7 @@ export default function POSPage() {
 
       // Polling for updates (Tables & Orders) every 15 seconds
       const pollInterval = setInterval(async () => {
-        const [tableRes, orderRes] = await Promise.all([getTables(), getOrders(20)]);
+        const [tableRes, orderRes] = await Promise.all([getTables(), getOrders({ limit: 20 })]);
         if (tableRes.success) useTableStore.getState().setTables(tableRes.data as Table[]);
         if (orderRes.success) setOrders(orderRes.orders as unknown as Order[]);
       }, 15000);
@@ -166,14 +164,14 @@ export default function POSPage() {
       total: total(),
       discount,
       diningOption,
-      paymentMethod: 'cash', // Default
+      paymentMethod: 'cash' as const, // Default
       tableId: selectedTableId,
       status: 'pending_payment'
     };
 
     let result;
     if (activeOrderId) {
-      result = await updateOrder(activeOrderId, orderData);
+      result = await updateOrder({ id: activeOrderId, data: orderData });
     } else {
       result = await createOrder(orderData);
     }
@@ -181,7 +179,7 @@ export default function POSPage() {
     if (result.success && result.order) {
       if (!activeOrderId) {
         setActiveOrderId(result.order.id);
-        await updateTableStatusDB(selectedTableId, 'occupied');
+        await updateTableStatusDB({ id: selectedTableId, status: 'occupied' });
         updateTableStatus(selectedTableId, 'occupied');
       }
       setNotification(activeOrderId ? "Đã cập nhật món thành công" : "Đã ghi món thành công");
@@ -202,7 +200,7 @@ export default function POSPage() {
     let result;
     if (activeOrderId) {
       // Finalize existing pending order
-      result = await updateOrderPaymentStatus(activeOrderId, 'completed', paymentMethod);
+      result = await updateOrderPaymentStatus({ orderId: activeOrderId, status: 'completed', paymentMethod });
 
       // Update quantities in DB since they weren't updated in createOrder if it was pending?
       // Actually my createOrder doesn't update stock. POS page handles stock update locally in useEffect or manually.
@@ -225,7 +223,7 @@ export default function POSPage() {
 
       // Update Table Status if Dine-in
       if (selectedTableId) {
-        await updateTableStatusDB(selectedTableId, 'available');
+        await updateTableStatusDB({ id: selectedTableId, status: 'available' });
         // Re-fetch all tables to sync linked ones
         const tableRes = await getTables();
         if (tableRes.success) useTableStore.getState().setTables(tableRes.data as Table[]);
@@ -239,7 +237,7 @@ export default function POSPage() {
       // If it was activeOrder, should we have updated stock when sending to bar or now?
       // Best to update stock when "sending to bar" (confirming the items)
 
-      const newOrderRes = await getOrders(20);
+      const newOrderRes = await getOrders({ limit: 20 });
       if (newOrderRes.success) setOrders(newOrderRes.orders as unknown as Order[]);
 
       clearCart();
@@ -258,7 +256,7 @@ export default function POSPage() {
   const handleTableSelect = async (table: Table) => {
     if (tableSelectionMode === 'move') {
       if (!selectedTableId) return;
-      const res = await moveOrder(selectedTableId, table.id);
+      const res = await moveOrder({ fromTableId: selectedTableId, toTableId: table.id });
       if (res.success) {
         // Re-fetch all tables to sync linked ones
         const tableRes = await getTables();
@@ -278,7 +276,7 @@ export default function POSPage() {
 
     if (tableSelectionMode === 'merge') {
       if (!selectedTableId) return;
-      const res = await mergeOrders(selectedTableId, table.id);
+      const res = await mergeOrders({ sourceTableId: selectedTableId, targetTableId: table.id });
       if (res.success) {
         // Re-fetch all tables to sync linked ones
         const tableRes = await getTables();
@@ -286,7 +284,7 @@ export default function POSPage() {
 
         setSelectedTable(table.id);
         // Reload order for target table
-        const orderRes = await getActiveOrderForTable(table.id);
+        const orderRes = await getActiveOrderForTable({ tableId: table.id });
         if (orderRes.success && orderRes.order) {
           const order = orderRes.order as unknown as Order;
           loadCart(order.items as unknown as CartItem[], order.diningOption as DiningOption, order.discount);
@@ -308,7 +306,7 @@ export default function POSPage() {
     setIsTableModalOpen(false);
 
     if (table.status === 'occupied') {
-      const res = await getActiveOrderForTable(table.id);
+      const res = await getActiveOrderForTable({ tableId: table.id });
       if (res.success && res.order) {
         const order = res.order as unknown as Order;
         loadCart(order.items as unknown as CartItem[], order.diningOption as DiningOption, order.discount);
@@ -342,8 +340,8 @@ export default function POSPage() {
 
   const confirmHoldOrder = async () => {
     const data = {
-      customerName: holdCustomerName || `Khách ${heldOrders.length + 1}`,
-      items: [...items],
+      name: holdCustomerName || `Khách ${heldOrders.length + 1}`,
+      items: JSON.stringify(items),
       subtotal: subtotal(),
       total: total(),
       discount,
@@ -368,7 +366,7 @@ export default function POSPage() {
       }
     }
 
-    const res = await deleteHeldOrder(order.id);
+    const res = await deleteHeldOrder({ id: order.id });
     if (res.success) {
       clearCart();
       loadCart(order.items, order.diningOption, order.discount);
@@ -391,17 +389,39 @@ export default function POSPage() {
   }
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden premium-gradient">
-      <Sidebar />
+    <div className="flex h-screen bg-background overflow-hidden premium-gradient relative">
+      <Sidebar isOpenMobile={isMobileSidebarOpen} onCloseMobile={() => setIsMobileSidebarOpen(false)} />
+      
+      {/* Mobile Sidebar Toggle Overlay */}
+      <AnimatePresence>
+        {isMobileSidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsMobileSidebarOpen(false)}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
+          />
+        )}
+      </AnimatePresence>
 
-      <main className="flex-1 flex flex-col p-8 overflow-hidden">
-        <header className="flex items-center gap-8 mb-10">
+      <main className="flex-1 flex flex-col p-4 md:p-8 overflow-hidden">
+        <header className="flex flex-col md:flex-row items-stretch md:items-center gap-4 md:gap-8 mb-6 md:mb-10">
+          <div className="flex items-center gap-4 lg:hidden">
+            <button 
+              onClick={() => setIsMobileSidebarOpen(true)}
+              className="p-3 bg-white shadow-sm border border-black/5 rounded-2xl hover:bg-secondary transition-all"
+            >
+              <LayoutGrid size={24} className="text-primary" />
+            </button>
+            <h1 className="text-xl font-black bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-600">Lân Coffee</h1>
+          </div>
           <div className="flex-1 relative">
             <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground/60" />
             <input
               type="text"
               placeholder="Hôm nay bạn muốn uống gì?..."
-              className="w-full bg-white/60 backdrop-blur-md border border-black/5 shadow-sm rounded-[1.5rem] py-4 pl-14 pr-6 focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all text-lg font-medium"
+              className="w-full bg-white/60 backdrop-blur-md border border-black/5 shadow-sm rounded-[1.2rem] md:rounded-[1.5rem] py-3 md:py-4 pl-12 md:pl-14 pr-6 focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all text-base md:text-lg font-medium"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -409,15 +429,16 @@ export default function POSPage() {
           <div className="flex items-center gap-4">
             <button
               onClick={() => setIsRecentOrdersDrawerOpen(true)}
-              className="bg-white border border-black/5 shadow-sm px-6 py-4 rounded-[1.2rem] text-sm font-bold flex items-center gap-2 hover:bg-secondary/50 transition-all active:scale-95"
+              className="flex-1 md:flex-none justify-center bg-white border border-black/5 shadow-sm px-4 md:px-6 py-3 md:py-4 rounded-[1.2rem] text-sm font-bold flex items-center gap-2 hover:bg-secondary/50 transition-all active:scale-95"
             >
               <History size={18} className="text-primary" />
-              Lịch sử đơn
+              <span className="hidden sm:inline">Lịch sử đơn</span>
+              <span className="sm:hidden text-xs">Lịch sử</span>
             </button>
           </div>
         </header>
 
-        <div className="flex gap-4 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+        <div className="flex gap-2.5 md:gap-4 mb-6 overflow-x-auto pb-2 scrollbar-hide -mx-2 px-2">
           {dbCategories.map((cat) => (
             <button
               key={cat}
@@ -434,8 +455,8 @@ export default function POSPage() {
           ))}
         </div>
 
-        <div className="flex-1 overflow-y-auto pr-4 scrollbar-hide">
-          <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6 pb-10">
+        <div className="flex-1 overflow-y-auto pr-2 md:pr-4 scrollbar-hide">
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-3 md:gap-6 pb-24 md:pb-10">
             {filteredProducts.map((product) => (
               <motion.div
                 layout
@@ -447,7 +468,7 @@ export default function POSPage() {
                 )}
                 onClick={() => handleProductClick(product)}
               >
-                <div className="aspect-video relative overflow-hidden">
+                <div className="aspect-square sm:aspect-video relative overflow-hidden">
                   <Image
                     src={product.image}
                     alt={product.name}
@@ -456,348 +477,288 @@ export default function POSPage() {
                     unoptimized
                   />
                   {product.stock > 0 ? (
-                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <div className="absolute inset-0 bg-black/20 opacity-0 md:group-hover:opacity-100 transition-opacity flex items-center justify-center">
                       <Plus className="text-white w-8 h-8" />
                     </div>
                   ) : (
                     <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-10">
-                      <span className="text-white font-bold text-sm bg-destructive px-3 py-1 rounded-full uppercase tracking-wider">Hết hàng</span>
+                      <span className="text-white font-bold text-[10px] md:text-sm bg-destructive px-3 py-1 rounded-full uppercase tracking-wider">Hết hàng</span>
                     </div>
                   )}
                 </div>
-                <div className="p-4">
+                <div className="p-3 md:p-4">
                   <div className="flex justify-between items-start mb-1">
-                    <h3 className="font-semibold text-sm h-10 line-clamp-2">{product.name}</h3>
+                    <h3 className="font-semibold text-xs md:text-sm h-8 md:h-10 line-clamp-2">{product.name}</h3>
                   </div>
                   <div className="flex justify-between items-end">
-                    <p className="text-primary font-bold">{formatCurrency(product.price)}</p>
+                    <p className="text-primary font-bold text-sm md:text-base">{formatCurrency(product.price)}</p>
                   </div>
                 </div>
               </motion.div>
             ))}
           </div>
         </div>
+
+        {/* Mobile View Cart Button */}
+        <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-30 w-[90%] max-w-sm">
+          <button
+            onClick={() => setIsMobileCartOpen(true)}
+            className="w-full bg-primary text-white font-bold py-4 rounded-2xl flex items-center justify-between px-6 shadow-2xl shadow-primary/40 active:scale-95 transition-all"
+          >
+            <div className="flex items-center gap-3">
+              <div className="bg-white/20 p-2 rounded-lg">
+                <ShoppingCart size={20} />
+              </div>
+              <span>Xem giỏ hàng</span>
+            </div>
+            <div className="flex flex-col items-end">
+              <span className="text-[10px] opacity-80 uppercase font-black">{items.reduce((a, b) => a + b.quantity, 0)} món</span>
+              <span className="text-base">{formatCurrency(total())}</span>
+            </div>
+          </button>
+        </div>
       </main>
 
-
-      <section className="w-96 border-l border-black/5 flex flex-col bg-white">
-        <div className="p-6 border-b border-black/5 flex justify-between items-center">
-          <h2 className="text-xl font-bold flex items-center gap-2">
-            <ShoppingCart className="w-5 h-5 text-primary" />
-            Giỏ hàng ({items.reduce((a, b) => a + b.quantity, 0)})
-          </h2>
-          {heldOrders.length > 0 && (
-            <button
-              onClick={() => setIsHeldOrdersListOpen(true)}
-              className="relative p-2 hover:bg-secondary/80 rounded-full transition-colors group"
-            >
-              <History className="w-5 h-5 text-muted-foreground group-hover:text-primary" />
-              <span className="absolute -top-1 -right-1 bg-primary text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
-                {heldOrders.length}
-              </span>
-            </button>
-          )}
-        </div>
-
-
-        {/* Dining Options */}
-        <div className="flex px-6 py-4 gap-2 bg-secondary/10 border-b border-black/5">
-          {[
-            { id: 'dine-in', label: 'Tại chỗ', icon: Utensils },
-            { id: 'take-away', label: 'Mang về', icon: ShoppingBag },
-          ].map((opt) => (
-            <button
-              key={opt.id}
-              onClick={() => {
-                if (opt.id === diningOption && opt.id === 'dine-in' && !selectedTableId) {
-                  setIsTableModalOpen(true);
-                  return;
-                }
-
-                if (opt.id === 'take-away') {
-                  if (activeOrderId && diningOption === 'dine-in') {
-                    if (!confirm("Đang có đơn hàng gán cho bàn này. Chuyển sang mang về sẽ giữ nguyên món nhưng không gắn với bàn nữa?")) return;
-                    setActiveOrderId(null);
-                  }
-                  setSelectedTable(null);
-                }
-
-                setDiningOption(opt.id as DiningOption);
-                if (opt.id === 'dine-in' && !selectedTableId) setIsTableModalOpen(true);
-              }}
-              className={cn(
-                "flex-1 flex flex-col items-center gap-1 py-1.5 rounded-xl border transition-all relative overflow-hidden",
-                diningOption === opt.id
-                  ? "bg-primary text-white border-primary shadow-md shadow-primary/20"
-                  : "bg-white text-muted-foreground border-black/5 hover:bg-secondary/50"
-              )}
-            >
-              <opt.icon size={16} className={cn(diningOption === opt.id ? "animate-pulse" : "")} />
-              <div className="flex flex-col items-center">
-                <span className="text-[10px] font-black uppercase tracking-wider">{opt.label}</span>
-              </div>
-              {diningOption === opt.id && (
-                <motion.div
-                  layoutId="activeOption"
-                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-white/40"
-                />
-              )}
-            </button>
-          ))}
-        </div>
-
-        {/* Table Control Panel - Only show when Dine-in and Table Selected */}
-        <AnimatePresence>
-          {diningOption === 'dine-in' && selectedTableId && (
+      {/* Cart Section - Responsive Sidebar or Overlay */}
+      <AnimatePresence>
+        {(isMobileCartOpen || (typeof window !== 'undefined' && window.innerWidth >= 1024)) && (
+          <>
+            {/* Overlay for Mobile Cart */}
             <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="px-6 mb-4 overflow-hidden"
+              key="cart-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsMobileCartOpen(false)}
+              className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[45]"
+            />
+            
+            <motion.section 
+              key="cart-section"
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className={cn(
+                "fixed lg:static top-0 right-0 h-full w-[90%] sm:w-96 border-l border-black/5 flex flex-col bg-white z-[50] shadow-2xl lg:shadow-none",
+                !isMobileCartOpen && "hidden lg:flex"
+              )}
             >
-              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 shadow-sm">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center font-black text-xl shadow-sm">
-                      {tables.find(t => t.id === selectedTableId)?.number}
-                    </div>
-                    <div>
-                      <div className="text-[10px] font-black uppercase text-amber-600 tracking-widest">Đang phục vụ</div>
-                      <div className="text-xs font-bold text-amber-900 truncate max-w-[100px]">
-                        {tables.find(t => t.id === selectedTableId)?.name}
+              <div className="p-4 md:p-6 border-b border-black/5 flex justify-between items-center bg-white shrink-0">
+                <h2 className="text-lg md:text-xl font-bold flex items-center gap-2">
+                  <ShoppingCart className="w-5 h-5 text-primary" />
+                  Giỏ hàng ({items.reduce((a, b) => a + b.quantity, 0)})
+                </h2>
+                <button 
+                  onClick={() => setIsMobileCartOpen(false)}
+                  className="lg:hidden p-2 hover:bg-secondary rounded-full"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Dining Options & Table Selector */}
+              <div className="p-4 md:p-6 border-b border-black/5 bg-gray-50/50 shrink-0">
+                <div className="flex gap-2 mb-4">
+                  {[
+                    { id: 'dine-in', label: 'Tại chỗ', icon: Utensils },
+                    { id: 'take-away', label: 'Mang về', icon: ShoppingBag },
+                  ].map((opt) => (
+                    <button
+                      key={opt.id}
+                      onClick={() => {
+                        if (opt.id === diningOption && opt.id === 'dine-in' && !selectedTableId) {
+                          setIsTableModalOpen(true);
+                          return;
+                        }
+                        if (opt.id === 'take-away') {
+                          if (activeOrderId && diningOption === 'dine-in') {
+                            if (!confirm("Đang có đơn hàng gán cho bàn này. Chuyển sang mang về sẽ giữ nguyên món nhưng không gắn với bàn nữa?")) return;
+                            setActiveOrderId(null);
+                          }
+                          setSelectedTable(null);
+                        }
+                        setDiningOption(opt.id as DiningOption);
+                        if (opt.id === 'dine-in' && !selectedTableId) setIsTableModalOpen(true);
+                      }}
+                      className={cn(
+                        "flex-1 flex flex-col items-center gap-1 py-2 rounded-xl border transition-all relative overflow-hidden",
+                        diningOption === opt.id
+                          ? "bg-primary text-white border-primary shadow-md shadow-primary/20"
+                          : "bg-white text-muted-foreground border-black/5 hover:bg-secondary/50 font-medium"
+                      )}
+                    >
+                      <opt.icon size={16} className={cn(diningOption === opt.id ? "animate-pulse" : "")} />
+                      <span className="text-[10px] font-bold uppercase tracking-wider">{opt.label}</span>
+                    </button>
+                  ))}
+                </div>
+
+                {diningOption === 'dine-in' && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center font-black text-xl shadow-sm">
+                          {tables.find(t => t.id === selectedTableId)?.number || "?"}
+                        </div>
+                        <div>
+                          <div className="text-[10px] font-black uppercase text-amber-600 tracking-widest">
+                            {selectedTableId ? "Bàn đang chọn" : "Chưa chọn bàn"}
+                          </div>
+                          <div className="text-xs font-bold text-amber-900 truncate max-w-[120px]">
+                            {tables.find(t => t.id === selectedTableId)?.name || "Vui lòng chọn bàn"}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => {
+                            setTableSelectionMode('default');
+                            setIsTableModalOpen(true);
+                          }}
+                          className="p-2 hover:bg-amber-100 rounded-lg text-amber-700 transition-colors"
+                          title="Đổi bàn"
+                        >
+                          <Edit3 size={16} />
+                        </button>
+                        {selectedTableId && (
+                          <button
+                            onClick={() => {
+                              if (items.length > 0 || activeOrderId) {
+                                if (!confirm("Thoát bàn sẽ bỏ chọn bàn hiện tại?")) return;
+                              }
+                              setSelectedTable(null);
+                              setActiveOrderId(null);
+                              if (items.length === 0) setDiningOption('take-away');
+                            }}
+                            className="p-2 hover:bg-amber-100 rounded-lg text-red-600 transition-colors"
+                            title="Thoát bàn"
+                          >
+                            <LogOut size={16} />
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
-                  <button
-                    onClick={() => {
-                      if (items.length > 0 || activeOrderId) {
-                        if (!confirm("Thoát bàn sẽ bỏ chọn bàn hiện tại?")) return;
-                      }
-                      setSelectedTable(null);
-                      setActiveOrderId(null);
-                      if (items.length === 0) setDiningOption('take-away');
-                    }}
-                    className="p-2 hover:bg-amber-100 rounded-lg text-amber-700 transition-colors"
-                    title="Thoát bàn"
-                  >
-                    <LogOut size={16} />
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={() => {
-                      setTableSelectionMode('move');
-                      setIsTableModalOpen(true);
-                    }}
-                    className="flex items-center justify-center gap-2 py-2 bg-white border border-amber-200 rounded-xl text-[10px] font-black text-amber-700 hover:bg-amber-100 transition-colors shadow-sm"
-                  >
-                    <ArrowRightLeft size={12} /> CHUYỂN BÀN
-                  </button>
-                  <button
-                    onClick={() => {
-                      setTableSelectionMode('merge');
-                      setIsTableModalOpen(true);
-                    }}
-                    className="flex items-center justify-center gap-2 py-2 bg-white border border-amber-200 rounded-xl text-[10px] font-black text-amber-700 hover:bg-amber-100 transition-colors shadow-sm"
-                  >
-                    <Combine size={12} /> GỘP BÀN
-                  </button>
-                  <button
-                    onClick={async () => {
-                      if (!selectedTableId) return;
-                      if (!confirm("Xác nhận dọn bàn này và đưa về trạng thái Trống?")) return;
-                      const res = await releaseTableGroup(selectedTableId);
-                      if (res.success) {
-                        const tableRes = await getTables();
-                        if (tableRes.success) useTableStore.getState().setTables(tableRes.data as Table[]);
-                        setSelectedTable(null);
-                        setActiveOrderId(null);
-                        clearCart();
-                        setNotification("Đã dọn bàn thành công");
-                        setTimeout(() => setNotification(null), 2000);
-                      }
-                    }}
-                    className="flex items-center justify-center gap-2 py-2 bg-white border border-red-200 rounded-xl text-[10px] font-black text-red-600 hover:bg-red-50 transition-colors shadow-sm col-span-2 mt-2"
-                  >
-                    <Trash2 size={12} /> DỌN BÀN / GIẢI PHÓNG
-                  </button>
-                </div>
+                )}
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
-        <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-4">
-          <AnimatePresence mode="popLayout">
-            {items.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-muted-foreground opacity-50">
-                <ShoppingCart className="w-12 h-12 mb-4" />
-                <p>Giỏ hàng đang trống</p>
-              </div>
-            ) : (
-              items.map((item) => (
-                <React.Fragment key={item.cartId}>
-                  <motion.div
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    className="flex items-center gap-4 bg-secondary/50 p-3 rounded-xl border border-black/5"
-                  >
-                    <div className="w-16 h-16 rounded-lg overflow-hidden relative shrink-0">
-                      <Image
-                        src={item.image || "/placeholder.png"}
-                        alt={item.name}
-                        fill
-                        className="object-cover"
-                        unoptimized
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-medium text-sm line-clamp-1">{item.name}</h4>
-                      {item.selectedOptions && item.selectedOptions.length > 0 && (
-                        <p className="text-xs text-muted-foreground mb-1 line-clamp-1">
-                          {item.selectedOptions.map(o => o.name).join(", ")}
-                        </p>
-                      )}
-                      {item.note && (
-                        <div className="bg-yellow-100/50 text-yellow-800 text-[10px] px-2 py-0.5 rounded-md mb-2 flex items-center gap-1">
-                          <MessageSquare size={10} />
-                          {item.note}
-                        </div>
-                      )}
-                      <p className="text-primary text-sm font-bold">{formatCurrency(item.price)}</p>
-                      <div className="flex items-center gap-3 mt-2">
-                        <button onClick={() => updateQuantity(item.cartId, item.quantity - 1)} className="p-1 rounded-md bg-white border border-black/5 hover:bg-secondary/80"><Minus size={14} /></button>
-                        <span className="text-sm font-medium">{item.quantity}</span>
-                        <button onClick={() => updateQuantity(item.cartId, item.quantity + 1)} className="p-1 rounded-md bg-white border border-black/5 hover:bg-secondary/80"><Plus size={14} /></button>
+              {/* Cart Items Scroll Area */}
+              <div className="flex-1 flex flex-col overflow-hidden">
+                <div className="p-4 md:p-6 flex flex-col gap-4 overflow-y-auto scrollbar-hide">
+                  <AnimatePresence mode="popLayout">
+                    {items.length === 0 ? (
+                      <div className="h-40 flex flex-col items-center justify-center text-muted-foreground opacity-50">
+                        <ShoppingCart className="w-12 h-12 mb-4" />
+                        <p>Giỏ hàng đang trống</p>
                       </div>
-                    </div>
-                    <div className="flex flex-col gap-1 shrink-0">
-                      <button onClick={() => removeItem(item.cartId)} className="text-destructive hover:bg-destructive/10 p-2 rounded-lg transition-colors">
-                        <Trash2 size={16} />
-                      </button>
-                      <button onClick={() => handleEditCartItem(item.cartId)} className="text-primary hover:bg-primary/10 p-2 rounded-lg transition-colors">
-                        <Edit3 size={16} />
-                      </button>
-                      <button
-                        onClick={() => setActiveNoteCartId(activeNoteCartId === item.cartId ? null : item.cartId)}
-                        className={cn("p-2 rounded-lg transition-colors", item.note ? "text-yellow-600 bg-yellow-50" : "text-slate-400 hover:bg-slate-100")}
-                      >
-                        <MessageSquare size={16} />
-                      </button>
-                    </div>
-                  </motion.div>
-
-                  {/* Note Inline Edit */}
-                  <AnimatePresence>
-                    {activeNoteCartId === item.cartId && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="px-2 mb-2"
-                      >
-                        <input
-                          autoFocus
-                          type="text"
-                          placeholder="Thêm ghi chú (VD: Không đá, Ít đường...)"
-                          className="w-full text-xs px-3 py-2 rounded-lg border border-yellow-200 bg-yellow-50 focus:outline-none"
-                          value={item.note || ""}
-                          onChange={(e) => updateItemNote(item.cartId, e.target.value)}
-                          onBlur={() => setActiveNoteCartId(null)}
-                        />
-                      </motion.div>
+                    ) : (
+                      items.map((item) => (
+                        <React.Fragment key={item.cartId}>
+                          <motion.div
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            className="flex items-center gap-3 md:gap-4 bg-secondary/50 p-2 md:p-3 rounded-xl border border-black/5"
+                          >
+                            <div className="w-12 h-12 md:w-16 md:h-16 rounded-lg overflow-hidden relative shrink-0">
+                               <Image
+                                src={item.image ?? "/placeholder.png"}
+                                alt={item.name}
+                                fill
+                                className="object-cover"
+                                unoptimized
+                              />
+                            </div>
+                            <div className="flex-1 overflow-hidden">
+                              <h4 className="font-medium text-xs md:text-sm line-clamp-1">{item.name}</h4>
+                              {item.selectedOptions && item.selectedOptions.length > 0 && (
+                                <p className="text-[10px] text-muted-foreground line-clamp-1">
+                                  {item.selectedOptions.map(o => o.name).join(", ")}
+                                </p>
+                              )}
+                              {item.note && (
+                                <div className="bg-yellow-100/50 text-yellow-800 text-[10px] px-2 py-0.5 rounded-md mt-1 flex items-center gap-1">
+                                  <MessageSquare size={10} />
+                                  <span className="truncate">{item.note}</span>
+                                </div>
+                              )}
+                              <p className="text-primary text-xs md:text-sm font-bold mt-0.5">{formatCurrency(item.price)}</p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <button onClick={() => updateQuantity(item.cartId, item.quantity - 1)} className="p-1 rounded-md bg-white border border-black/5 hover:bg-secondary/80 transition-colors"><Minus size={12} /></button>
+                                <span className="text-xs font-medium w-4 text-center">{item.quantity}</span>
+                                <button onClick={() => updateQuantity(item.cartId, item.quantity + 1)} className="p-1 rounded-md bg-white border border-black/5 hover:bg-secondary/80 transition-colors"><Plus size={12} /></button>
+                              </div>
+                            </div>
+                            <div className="flex flex-col gap-1 shrink-0">
+                              <button onClick={() => removeItem(item.cartId)} className="text-destructive p-2 hover:bg-destructive/5 rounded-lg transition-colors">
+                                <Trash2 size={16} />
+                              </button>
+                              <button onClick={() => handleEditCartItem(item.cartId)} className="text-primary p-2 hover:bg-primary/5 rounded-lg transition-colors">
+                                <Edit3 size={16} />
+                              </button>
+                            </div>
+                          </motion.div>
+                        </React.Fragment>
+                      ))
                     )}
                   </AnimatePresence>
-                </React.Fragment>
-              ))
-            )}
-          </AnimatePresence>
-        </div>
+                </div>
+              </div>
 
-        <div className="p-6 border-t border-black/5 bg-secondary/30">
-          <div className="flex justify-between mb-2">
-            <span className="text-muted-foreground">Tạm tính</span>
-            <span>{formatCurrency(subtotal())}</span>
-          </div>
-          <div className="flex justify-between items-center mb-4">
-            <span className="text-muted-foreground">Giảm giá</span>
-            <span className="text-red-500 font-bold">-{formatCurrency((subtotal() * discount) / 100)}</span>
-          </div>
-          <div className="flex justify-between text-xl font-bold mb-4 pt-4 border-t border-white/10">
-            <span>Tổng cộng</span>
-            <span className="text-primary">{formatCurrency(total())}</span>
-          </div>
-
-          {diningOption === 'dine-in' && selectedTableId && activeOrderId && (
-            <div className="flex gap-2 mb-3">
-              <button
-                onClick={() => {
-                  setTableSelectionMode('move');
-                  setIsTableModalOpen(true);
-                }}
-                className="flex-1 py-2 rounded-xl bg-amber-50 text-amber-600 border border-amber-100 text-[10px] font-bold hover:bg-amber-100 transition-all flex items-center justify-center gap-1"
-              >
-                <ChevronRight size={14} className="rotate-180" />
-                Chuyển bàn
-              </button>
-              <button
-                onClick={() => {
-                  setTableSelectionMode('merge');
-                  setIsTableModalOpen(true);
-                }}
-                className="flex-1 py-2 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100 text-[10px] font-bold hover:bg-indigo-100 transition-all flex items-center justify-center gap-1"
-              >
-                <Plus size={14} />
-                Gộp bàn
-              </button>
-            </div>
-          )}
-
-          <div className="flex gap-3 mb-3">
-            <button
-              onClick={() => {
-                clearCart();
-                setActiveOrderId(null);
-                setSelectedTable(null);
-              }}
-              disabled={items.length === 0}
-              className="flex-1 py-3 rounded-xl border border-black/5 text-muted-foreground font-bold text-sm hover:bg-red-50 hover:text-red-500 transition-all disabled:opacity-50"
-            >
-              Hủy đơn
-            </button>
-            {diningOption === 'dine-in' && (
-              <button
-                onClick={handleConfirmItems}
-                disabled={items.length === 0 || !selectedTableId}
-                className="flex-1 py-3 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 font-bold text-sm hover:bg-blue-100 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-              >
-                <Save size={16} />
-                Ghi món
-              </button>
-            )}
-            {diningOption === 'take-away' && (
-              <button
-                onClick={handleHoldOrderClick}
-                disabled={items.length === 0}
-                className="flex-1 py-3 rounded-xl bg-orange-50 text-orange-600 border border-orange-100 font-bold text-sm hover:bg-orange-100 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-              >
-                <Save size={16} />
-                Lưu đơn
-              </button>
-            )}
-          </div>
-          <button
-            disabled={items.length === 0}
-            onClick={handleCheckoutClick}
-            className="w-full bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
-          >
-            <CreditCard size={20} />
-            {activeOrderId ? "Thanh toán (Billing)" : "Thanh toán ngay"}
-          </button>
-        </div>
-      </section>
+              {/* Checkout Controls */}
+              <div className="p-4 md:p-6 border-t border-black/5 bg-secondary/30 mt-auto">
+                <div className="flex justify-between text-sm md:text-base mb-1">
+                  <span className="text-muted-foreground">Tạm tính</span>
+                  <span>{formatCurrency(subtotal())}</span>
+                </div>
+                <div className="flex justify-between text-lg md:text-xl font-bold mb-4 pt-4 border-t border-black/10">
+                  <span>Tổng cộng</span>
+                  <span className="text-primary">{formatCurrency(total())}</span>
+                </div>
+                <div className="flex flex-col gap-3">
+                  {heldOrders.length > 0 && (
+                    <button
+                      onClick={() => setIsHeldOrdersListOpen(true)}
+                      className="w-full bg-orange-50 text-orange-600 border border-orange-100 py-3 rounded-xl flex items-center justify-center gap-2 font-bold text-sm hover:bg-orange-100 transition-all"
+                    >
+                      <History size={16} />
+                      Đơn hàng chờ ({heldOrders.length})
+                    </button>
+                  )}
+                  {diningOption === 'dine-in' && (
+                    <button
+                      onClick={handleConfirmItems}
+                      disabled={items.length === 0 || !selectedTableId}
+                      className="w-full py-3 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 font-bold text-sm hover:bg-blue-100 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+                    >
+                      <Save size={16} />
+                      Ghi món ({tables.find(t => t.id === selectedTableId)?.number || '?'})
+                    </button>
+                  ) || (
+                    <button
+                      onClick={handleHoldOrderClick}
+                      disabled={items.length === 0}
+                      className="w-full py-3 rounded-xl bg-orange-50 text-orange-600 border border-orange-100 font-bold text-sm hover:bg-orange-100 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+                    >
+                      <Save size={16} />
+                      Lưu đơn (Tạm)
+                    </button>
+                  )}
+                  <button
+                    disabled={items.length === 0}
+                    onClick={handleCheckoutClick}
+                    className="w-full bg-primary hover:bg-primary/90 disabled:opacity-50 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
+                  >
+                    <CreditCard size={18} />
+                    {activeOrderId ? "Thanh toán (Billing)" : "Thanh toán ngay"}
+                  </button>
+                </div>
+              </div>
+            </motion.section>
+          </>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {notification && (
@@ -825,7 +786,7 @@ export default function POSPage() {
           setSelectedProductForOptions(null);
           setEditingCartId(null);
         }}
-        product={selectedProductForOptions}
+        product={selectedProductForOptions as Product}
         initialOptions={editingCartId ? items.find(i => i.cartId === editingCartId)?.selectedOptions : []}
         mode={editingCartId ? 'edit' : 'add'}
         onAddToCart={handleAddToCartFromModal}
@@ -1046,7 +1007,6 @@ export default function POSPage() {
         )}
       </AnimatePresence>
 
-      {/* Held Orders List Modal */}
     </div>
   );
 }

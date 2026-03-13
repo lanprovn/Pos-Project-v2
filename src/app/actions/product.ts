@@ -1,168 +1,108 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
+import { productService } from "@/services/productService";
 import { revalidatePath } from "next/cache";
+import { createSafeAction } from "@/lib/create-safe-action";
+import { 
+    emptySchema, 
+    idSchema, 
+    productSchema, 
+    updateProductSchema,
+    adjustStockSchema,
+    categorySchema,
+    updateCategorySchema
+} from "@/lib/validations";
+import { z } from "zod";
 
-export async function getProducts(query?: string, category?: string) {
-    try {
-        const where: { name?: { contains: string; mode: 'insensitive' }; categoryName?: string } = {};
-        if (query) {
-            where.name = { contains: query, mode: 'insensitive' };
-        }
-        if (category && category !== 'All') {
-            where.categoryName = category;
-        }
-
-        const productsRaw = await prisma.product.findMany({
-            where,
-            orderBy: { createdAt: 'desc' },
-        });
-
-        const products = productsRaw.map(p => ({
-            ...p,
-            options: p.options ? JSON.parse(p.options as string) : []
-        }));
-
-        return { success: true, products };
-    } catch (error) {
-        console.error("Error fetching products:", error);
-        return { success: false, error: "Failed to fetch products" };
+export const getProducts = createSafeAction(
+    z.any(),
+    async ({ query, category }) => {
+        const products = await productService.getAllProducts(query, category);
+        return { products };
     }
-}
+);
 
-export async function createProductAction(data: { name: string; price: number; costPrice?: number; sku?: string; barcode?: string; category: string; image: string; stock: number; unit?: string; description?: string; options?: object[] }) {
-    try {
-        const product = await prisma.product.create({
-            data: {
-                name: data.name,
-                price: data.price,
-                costPrice: data.costPrice,
-                sku: data.sku,
-                barcode: data.barcode,
-                categoryName: data.category,
-                image: data.image,
-                stock: data.stock,
-                unit: data.unit || 'Món',
-                description: data.description,
-                options: data.options ? JSON.stringify(data.options) : "[]",
-            }
-        });
+export const createProductAction = createSafeAction(
+    productSchema,
+    async (data) => {
+        const product = await productService.createProduct(data);
         revalidatePath("/");
         revalidatePath("/inventory");
-        return { success: true, product };
-    } catch {
-        return { success: false, error: "Failed to create product" };
+        return { product };
     }
-}
+);
 
-export async function updateProductAction(id: string, data: { name?: string; price?: number; costPrice?: number; sku?: string; barcode?: string; category?: string; image?: string; stock?: number; unit?: string; description?: string; options?: object[] }) {
-    try {
-        const product = await prisma.product.update({
-            where: { id },
-            data: {
-                name: data.name,
-                price: data.price,
-                costPrice: data.costPrice,
-                sku: data.sku,
-                barcode: data.barcode,
-                categoryName: data.category,
-                image: data.image,
-                stock: data.stock,
-                unit: data.unit,
-                description: data.description,
-                options: data.options ? JSON.stringify(data.options) : undefined,
-            }
-        });
+export const updateProductAction = createSafeAction(
+    z.object({ id: z.string(), data: z.any() }), // Simplified for now
+    async ({ id, data }) => {
+        const product = await productService.updateProduct(id, data);
         revalidatePath("/");
         revalidatePath("/inventory");
-        return { success: true, product };
-    } catch {
-        return { success: false, error: "Failed to update product" };
+        return { product };
     }
-}
+);
 
-export async function restockProductAction(id: string, quantity: number) {
-    try {
-        const product = await prisma.product.update({
-            where: { id },
-            data: { stock: { increment: quantity } }
-        });
+export const restockProductAction = createSafeAction(
+    adjustStockSchema,
+    async ({ id, quantity }) => {
+        const product = await productService.adjustStock(id, quantity);
         revalidatePath("/");
         revalidatePath("/inventory");
-        return { success: true, product };
-    } catch {
-        return { success: false, error: "Lỗi khi nhập hàng" };
+        return { product };
     }
-}
+);
 
-export async function updateStockAction(id: string, diff: number) {
-    try {
-        const product = await prisma.product.update({
-            where: { id },
-            data: { stock: { increment: diff } }
-        });
+export const updateStockAction = createSafeAction(
+    adjustStockSchema,
+    async ({ id, diff }) => {
+        const product = await productService.adjustStock(id, diff || 0);
         revalidatePath("/");
         revalidatePath("/inventory");
-        return { success: true, product };
-    } catch {
-        return { success: false, error: "Failed to update stock" };
+        return { product };
     }
-}
+);
 
-export async function deleteProductAction(id: string) {
-    try {
-        await prisma.product.delete({ where: { id } });
+export const deleteProductAction = createSafeAction(
+    idSchema,
+    async ({ id }) => {
+        await productService.deleteProduct(id);
         revalidatePath("/");
         revalidatePath("/inventory");
-        return { success: true };
-    } catch {
-        return { success: false, error: "Failed to delete product" };
+        return true;
     }
-}
+);
 
-export async function getCategories() {
-    try {
-        const categories = await prisma.category.findMany();
-        return { success: true, categories };
-    } catch {
-        return { success: false, error: "Failed to fetch categories" };
+export const getCategories = createSafeAction(
+    emptySchema,
+    async () => {
+        const categories = await productService.getAllCategories();
+        return { categories };
     }
-}
+);
 
-export async function createCategory(data: { name: string; icon?: string }) {
-    try {
-        const category = await prisma.category.create({
-            data: {
-                name: data.name,
-                icon: data.icon,
-            }
-        });
+export const createCategory = createSafeAction(
+    categorySchema,
+    async (data) => {
+        const category = await productService.createCategory(data);
         revalidatePath("/inventory");
-        return { success: true, category };
-    } catch {
-        return { success: false, error: "Failed to create category" };
+        return { category };
     }
-}
+);
 
-export async function deleteCategory(id: string) {
-    try {
-        await prisma.category.delete({ where: { id } });
+export const updateCategory = createSafeAction(
+    updateCategorySchema,
+    async ({ id, name }) => {
+        const category = await productService.updateCategory(id, name);
         revalidatePath("/inventory");
-        return { success: true };
-    } catch {
-        return { success: false, error: "Failed to delete category" };
+        return { category };
     }
-}
+);
 
-export async function updateCategory(id: string, name: string) {
-    try {
-        const category = await prisma.category.update({
-            where: { id },
-            data: { name }
-        });
+export const deleteCategory = createSafeAction(
+    idSchema,
+    async ({ id }) => {
+        await productService.deleteCategory(id);
         revalidatePath("/inventory");
-        return { success: true, category };
-    } catch {
-        return { success: false, error: "Failed to update category" };
+        return true;
     }
-}
+);

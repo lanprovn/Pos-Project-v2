@@ -1,14 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import type { Table } from '@/types/table';
 
-export interface Table {
-    id: string;
-    number: number;
-    name: string;
-    status: 'available' | 'occupied' | 'reserved';
-    currentOrderId?: string;
-    parentTableId?: string | null;
-}
+export type { Table };
 
 interface TableStore {
     tables: Table[];

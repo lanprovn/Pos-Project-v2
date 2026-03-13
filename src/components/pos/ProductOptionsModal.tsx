@@ -85,10 +85,10 @@ export function ProductOptionsModal({
                     initial={{ opacity: 0, scale: 0.9, y: 20 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.9 }}
-                    className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+                    className="bg-white w-full max-w-lg rounded-none sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col h-[100dvh] sm:h-auto sm:max-h-[90vh]"
                 >
                     {/* Header with Image */}
-                    <div className="relative h-48 bg-secondary">
+                    <div className="relative h-40 md:h-48 bg-secondary shrink-0">
                         <Image
                             src={product.image}
                             alt={product.name}
@@ -96,10 +96,10 @@ export function ProductOptionsModal({
                             className="object-cover"
                             unoptimized
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-6">
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-4 md:p-6">
                             <div className="text-white">
-                                <h2 className="text-2xl font-bold">{product.name}</h2>
-                                <p className="text-white/80 font-medium">{formatCurrency(basePrice)}</p>
+                                <h2 className="text-xl md:text-2xl font-bold">{product.name}</h2>
+                                <p className="text-white/80 font-medium text-sm md:text-base">{formatCurrency(basePrice)}</p>
                             </div>
                         </div>
                         <button
@@ -111,7 +111,7 @@ export function ProductOptionsModal({
                     </div>
 
                     {/* Options List */}
-                    <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                    <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
                         {normalizedOptions && normalizedOptions.length > 0 ? (
                             normalizedOptions.map((option) => (
                                 <div key={option.id}>
@@ -161,7 +161,7 @@ export function ProductOptionsModal({
                     </div>
 
                     {/* Footer Controls */}
-                    <div className="p-6 border-t border-black/5 bg-secondary/30 space-y-4">
+                    <div className="p-4 md:p-6 border-t border-black/5 bg-secondary/30 space-y-4 shrink-0">
                         {/* Quantity */}
                         {mode === 'add' && (
                             <div className="flex items-center justify-between bg-white p-2 rounded-xl border border-black/5">
@@ -187,14 +187,14 @@ export function ProductOptionsModal({
                         {/* Add/Update Button */}
                         <button
                             onClick={handleConfirm}
-                            className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 flex items-center justify-between px-6 transition-all active:scale-[0.98]"
+                            className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-3 md:py-4 rounded-xl shadow-lg shadow-primary/20 flex items-center justify-between px-4 md:px-6 transition-all active:scale-[0.98]"
                         >
-                            <span className="text-lg">{mode === 'edit' ? 'Cập nhật món' : 'Thêm vào giỏ'}</span>
+                            <span className="text-base md:text-lg">{mode === 'edit' ? 'Cập nhật món' : 'Thêm vào giỏ'}</span>
                             <div className="flex items-center gap-2">
-                                <span className="text-sm font-normal opacity-80 decoration-slice">
+                                <span className="text-[10px] md:text-sm font-normal opacity-80 decoration-slice">
                                     {quantity} x {formatCurrency(unitPrice)} =
                                 </span>
-                                <span className="text-xl">{formatCurrency(totalPrice)}</span>
+                                <span className="text-lg md:text-xl">{formatCurrency(totalPrice)}</span>
                             </div>
                         </button>
                     </div>

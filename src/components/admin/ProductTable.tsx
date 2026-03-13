@@ -6,14 +6,7 @@ import Image from "next/image";
 import { Edit, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 
-interface Product {
-    id: string;
-    name: string;
-    price: number;
-    categoryName: string;
-    image: string;
-    stock: number;
-}
+import type { Product } from "@/types/product";
 
 interface ProductTableProps {
     products: Product[];
@@ -67,7 +60,7 @@ export function ProductTable({ products, onEdit, onDelete }: ProductTableProps) 
                                 </td>
                                 <td className="py-4 px-6">
                                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
-                                        {product.categoryName}
+                                        {product.category}
                                     </span>
                                 </td>
                                 <td className="py-4 px-6 font-medium font-mono text-primary">

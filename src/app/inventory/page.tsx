@@ -65,14 +65,14 @@ export default function InventoryPage() {
     };
 
     const handleUpdateCategory = async (id: string, name: string) => {
-        const res = await updateCategory(id, name);
+        const res = await updateCategory({ id, name });
         if (res.success && res.category) {
             setCategories(categories.map(c => c.id === id ? res.category! : c));
         }
     };
 
     const handleDeleteCategory = async (id: string) => {
-        const res = await deleteCategory(id);
+        const res = await deleteCategory({ id });
         if (res.success) {
             setCategories(categories.filter(c => c.id !== id));
         }
@@ -270,7 +270,7 @@ export default function InventoryPage() {
                                                         <button
                                                             onClick={async () => {
                                                                 if (confirm("Bạn có chắc chắn muốn xóa sản phẩm này?")) {
-                                                                    await deleteProductAction(product.id);
+                                                                    await deleteProductAction({ id: product.id });
                                                                 }
                                                             }}
                                                             className="p-2 rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
@@ -319,7 +319,7 @@ export default function InventoryPage() {
                     }
                 }}
                 onUpdate={async (id, data) => {
-                    const res = await updateProductAction(id, data);
+                    const res = await updateProductAction({ id, data });
                     if (res.success) {
                         window.location.reload();
                     }
@@ -330,7 +330,7 @@ export default function InventoryPage() {
                 onClose={() => setIsImportModalOpen(false)}
                 products={products}
                 onImport={async (productId, quantity) => {
-                    const res = await restockProductAction(productId, quantity);
+                    const res = await restockProductAction({ id: productId, quantity });
                     if (res.success) {
                         window.location.reload();
                     }

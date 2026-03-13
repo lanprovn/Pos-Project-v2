@@ -1,36 +1,21 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
+import { promotionService } from "@/services/promotionService";
+import { createSafeAction } from "@/lib/create-safe-action";
+import { emptySchema, validateVoucherSchema } from "@/lib/validations";
 
-export async function getPromotions() {
-    try {
-        const promotions = await prisma.promotion.findMany({
-            orderBy: { name: 'asc' },
-        });
-        return { success: true, promotions };
-    } catch (error) {
-        console.error("Error fetching promotions:", error);
-        return { success: false, error: "Failed to fetch promotions" };
+export const getPromotions = createSafeAction(
+    emptySchema,
+    async () => {
+        const promotions = await promotionService.getAllPromotions();
+        return { promotions };
     }
-}
+);
 
-export async function validateVoucher(code: string) {
-    try {
-        const promotion = await prisma.promotion.findFirst({
-            where: {
-                code: { equals: code },
-                type: 'Voucher',
-                isActive: true,
-            },
-        });
-
-        if (!promotion) return { success: false, error: "Voucher không tồn tại hoặc đã hết hạn" };
-
-        // Check expiration
-
-        return { success: true, promotion };
-    } catch (error) {
-        console.error("Error validating voucher:", error);
-        return { success: false, error: "Lỗi hệ thống khi kiểm tra voucher" };
+export const validateVoucher = createSafeAction(
+    validateVoucherSchema,
+    async ({ code }) => {
+        const promotion = await promotionService.validateVoucher(code);
+        return { promotion };
     }
-}
+);
