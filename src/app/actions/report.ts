@@ -46,7 +46,7 @@ export async function getStaffDailyRevenueAction() {
         const productSales: Record<string, { name: string; quantity: number; total: number }> = {};
 
         orders.forEach(order => {
-            const items = (order.items as unknown as CartItem[]) || [];
+            const items = JSON.parse(order.items as string || '[]') as CartItem[];
             items.forEach((item: CartItem) => {
                 const productId = item.id || item.productId || "unknown";
                 if (!productSales[productId]) {
@@ -58,13 +58,16 @@ export async function getStaffDailyRevenueAction() {
         });
 
         // Chi tiết đơn hàng
-        const orderDetails = orders.map(order => ({
-            id: order.id,
-            total: order.total,
-            time: order.date.toISOString(),
-            paymentMethod: order.paymentMethod,
-            itemsCount: ((order.items as unknown as CartItem[]) || []).reduce((sum, item) => sum + (item.quantity || 1), 0)
-        }));
+        const orderDetails = orders.map(order => {
+            const items = JSON.parse(order.items as string || '[]') as CartItem[];
+            return {
+                id: order.id,
+                total: order.total,
+                time: order.date.toISOString(),
+                paymentMethod: order.paymentMethod,
+                itemsCount: items.reduce((sum, item) => sum + (item.quantity || 1), 0)
+            };
+        });
 
         return {
             success: true,

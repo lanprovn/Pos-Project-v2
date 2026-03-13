@@ -1,12 +1,7 @@
 /* eslint-disable no-console */
 import { PrismaClient } from '@prisma/client';
-import { PrismaPg } from '@prisma/adapter-pg';
-import pg from 'pg';
-import "dotenv/config";
 
-const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
-const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
+const prisma = new PrismaClient();
 
 async function main() {
     console.log('Seeding started with EXACT menu levels and split Hot/Cold products...');
@@ -109,7 +104,7 @@ async function main() {
                 categoryName: item.category,
                 image: item.image,
                 stock: 999,
-                options: (item.category === 'COFFEE' || item.category === 'SINH TỐ' || item.category === 'NƯỚC GIẢI KHÁT') ? [
+                options: (item.category === 'COFFEE' || item.category === 'SINH TỐ' || item.category === 'NƯỚC GIẢI KHÁT') ? JSON.stringify([
                     {
                         id: "opt_size",
                         name: "Size",
@@ -120,7 +115,7 @@ async function main() {
                             { name: "L", price: 5000 },
                         ]
                     }
-                ] : []
+                ]) : "[]"
             }
         });
     }

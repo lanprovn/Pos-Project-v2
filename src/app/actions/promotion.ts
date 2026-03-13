@@ -18,7 +18,7 @@ export async function validateVoucher(code: string) {
     try {
         const promotion = await prisma.promotion.findFirst({
             where: {
-                code: { equals: code, mode: 'insensitive' },
+                code: { equals: code },
                 type: 'Voucher',
                 isActive: true,
             },

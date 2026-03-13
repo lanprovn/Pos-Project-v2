@@ -7,7 +7,11 @@ export async function getHeldOrders() {
         const orders = await prisma.heldOrder.findMany({
             orderBy: { createdAt: 'desc' },
         });
-        return { success: true, orders };
+        const ordersResult = orders.map(o => ({
+            ...o,
+            items: JSON.parse(o.items as string || '[]')
+        }));
+        return { success: true, orders: ordersResult };
     } catch (error) {
         console.error("Error fetching held orders:", error);
         return { success: false, error: "Failed to fetch held orders" };
@@ -19,7 +23,7 @@ export async function saveHeldOrder(data: { customerName: string; items: object[
         const order = await prisma.heldOrder.create({
             data: {
                 customerName: data.customerName,
-                items: data.items,
+                items: JSON.stringify(data.items),
                 total: data.total,
                 subtotal: data.subtotal,
                 discount: data.discount,

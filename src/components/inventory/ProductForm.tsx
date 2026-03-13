@@ -34,7 +34,12 @@ export function ProductForm({ isOpen, onClose, editProduct, categories, onAdd, o
 
     // Form State - Initialized directly from props because we use 'key' to remount
     const [formData, setFormData] = useState<Partial<Product>>(editProduct || defaultProduct);
-    const [options, setOptions] = useState<ProductOption[]>(editProduct?.options || []);
+    const [options, setOptions] = useState<ProductOption[]>(() => {
+        if (!editProduct?.options) return [];
+        return Array.isArray(editProduct.options) 
+            ? editProduct.options 
+            : JSON.parse(editProduct.options as any);
+    });
 
     const handleAddOption = () => {
         setOptions([

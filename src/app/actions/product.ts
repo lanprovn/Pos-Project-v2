@@ -13,10 +13,16 @@ export async function getProducts(query?: string, category?: string) {
             where.categoryName = category;
         }
 
-        const products = await prisma.product.findMany({
+        const productsRaw = await prisma.product.findMany({
             where,
             orderBy: { createdAt: 'desc' },
         });
+
+        const products = productsRaw.map(p => ({
+            ...p,
+            options: p.options ? JSON.parse(p.options as string) : []
+        }));
+
         return { success: true, products };
     } catch (error) {
         console.error("Error fetching products:", error);
@@ -38,7 +44,7 @@ export async function createProductAction(data: { name: string; price: number; c
                 stock: data.stock,
                 unit: data.unit || 'Món',
                 description: data.description,
-                options: data.options,
+                options: data.options ? JSON.stringify(data.options) : "[]",
             }
         });
         revalidatePath("/");
@@ -64,7 +70,7 @@ export async function updateProductAction(id: string, data: { name?: string; pri
                 stock: data.stock,
                 unit: data.unit,
                 description: data.description,
-                options: data.options,
+                options: data.options ? JSON.stringify(data.options) : undefined,
             }
         });
         revalidatePath("/");

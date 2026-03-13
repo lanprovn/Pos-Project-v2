@@ -4,6 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -38,7 +39,7 @@ model Product {
   image        String
   stock        Int      @default(0)
   description  String?
-  options      Json?    // Array of ProductOption structure
+  options      String?  // Array of ProductOption structure (JSON string)
   unit         String?  @default("Món")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -57,7 +58,7 @@ model Customer {
 
 model Order {
   id                String       @id @default(cuid())
-  items             Json         // Lưu list CartItem[]
+  items             String       // Lưu list CartItem[] dạng String (JSON.stringify)
   total             Float
   subtotal          Float
   discount          Float
@@ -115,7 +116,7 @@ model ShiftSession {
 model HeldOrder {
   id           String   @id @default(cuid())
   customerName String?
-  items        Json     // Lưu list CartItem[]
+  items        String     // Lưu list CartItem[] dạng String (JSON.stringify)
   diningOption String
   discount     Float
   subtotal     Float

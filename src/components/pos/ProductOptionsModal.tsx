@@ -26,11 +26,15 @@ export function ProductOptionsModal({
 }: ProductOptionsModalProps) {
     // State is initialized directly from props.
     // In POS Page, we use a different 'key' for the modal to force a remount when product changes.
+    const normalizedOptions: ProductOption[] = Array.isArray(product?.options) 
+        ? product?.options 
+        : (typeof product?.options === 'string' ? JSON.parse(product.options as any) : []);
+
     const [selectedOptions, setSelectedOptions] = useState<OptionValue[]>(() => {
         if (mode === 'edit') return initialOptions;
 
         const defaultOpts: OptionValue[] = [];
-        product?.options?.forEach(opt => {
+        normalizedOptions.forEach((opt: ProductOption) => {
             if (opt.type === 'single' && opt.required && opt.values.length > 0) {
                 defaultOpts.push(opt.values[0]);
             }
@@ -108,8 +112,8 @@ export function ProductOptionsModal({
 
                     {/* Options List */}
                     <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                        {product.options && product.options.length > 0 ? (
-                            product.options.map((option) => (
+                        {normalizedOptions && normalizedOptions.length > 0 ? (
+                            normalizedOptions.map((option) => (
                                 <div key={option.id}>
                                     <h3 className="font-bold text-sm text-muted-foreground uppercase tracking-wider mb-3">
                                         {option.name} {option.required && <span className="text-destructive">*</span>}

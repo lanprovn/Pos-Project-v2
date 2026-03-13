@@ -17,7 +17,7 @@ export async function createOrder(data: {
     try {
         const order = await prisma.order.create({
             data: {
-                items: data.items,
+                items: JSON.stringify(data.items),
                 total: data.total,
                 subtotal: data.subtotal,
                 discount: data.discount,
@@ -108,7 +108,11 @@ export async function getActiveOrderForTable(tableId: string) {
             },
             orderBy: { date: 'desc' }
         });
-        return { success: true, order };
+        const orderResult = order ? {
+            ...order,
+            items: JSON.parse(order.items as string || '[]')
+        } : null;
+        return { success: true, order: orderResult };
     } catch {
         return { success: false, error: "Failed to fetch active order" };
     }
@@ -136,7 +140,11 @@ export async function getOrders(limit: number = 50) {
             orderBy: { date: 'desc' },
             include: { customer: true }
         });
-        return { success: true, orders };
+        const ordersResult = orders.map(o => ({
+            ...o,
+            items: JSON.parse(o.items as string)
+        }));
+        return { success: true, orders: ordersResult };
     } catch (error) {
         console.error("Error fetching orders:", error);
         return { success: false, error: "Failed to fetch orders" };
@@ -153,7 +161,7 @@ export async function updateOrder(id: string, data: {
         const order = await prisma.order.update({
             where: { id },
             data: {
-                items: data.items,
+                items: JSON.stringify(data.items),
                 total: data.total,
                 subtotal: data.subtotal,
                 discount: data.discount,
@@ -244,7 +252,7 @@ export async function mergeOrders(sourceTableId: string, targetTableId: string) 
             prisma.order.update({
                 where: { id: targetOrder.id },
                 data: {
-                    items: mergedItems,
+                    items: JSON.stringify(mergedItems),
                     subtotal: mergedSubtotal,
                     total: mergedTotal,
                 }
