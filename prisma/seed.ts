@@ -92,7 +92,7 @@ async function main() {
         { name: 'Cam vắt', price: 30000, category: 'NƯỚC GIẢI KHÁT', image: '/img/gallery/cam-vat.png' },
         { name: 'Xí muội', price: 20000, category: 'NƯỚC GIẢI KHÁT', image: '/img/gallery/nuoc-xi-muoi.jpg' },
         { name: 'Chanh dây', price: 23000, category: 'NƯỚC GIẢI KHÁT', image: '/img/gallery/chanh-day.png' },
-        { name: 'Sữa chua chanh dây', price: 30000, category: 'NƯỚC GIẢI KHÁT', image: '/img/gallery/sua-chua-chanh-dây.jpg' },
+        { name: 'Sữa chua chanh dây', price: 30000, category: 'NƯỚC GIẢI KHÁT', image: '/img/gallery/sua-chua-chanh-day.jpg' },
         { name: 'Sữa chua việt quất', price: 30000, category: 'NƯỚC GIẢI KHÁT', image: '/img/gallery/sua-chua-viet-quat.webp' },
     ];
 
