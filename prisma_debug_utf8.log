@@ -1,0 +1,120 @@
+﻿node.exe : prisma:engines 
+binaries to download 
+libquery-engine, 
+schema-engine +183ms
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~
+    + CategoryInfo           
+   : NotSpecified: (prisma:  
+  engines ...a-engine +183   
+ ms:String) [], RemoteExc    
+eption
+    + FullyQualifiedErrorId  
+   : NativeCommandError
+ 
+prisma:getSchema 
+prismaConfig {
+  "data": {
+    "seed": "tsx 
+prisma/seed.ts"
+  },
+  "packagePath": "C:\\Users\\
+admin\\Documents\\Pos-Project
+-v2\\package.json"
+} +271ms
+prisma:getSchema Checking 
+existence of C:\Users\admin\D
+ocuments\Pos-Project-v2\schem
+a.prisma +0ms
+prisma:getSchema Reading 
+schema from single file C:\Us
+ers\admin\Documents\Pos-Proje
+ct-v2\schema.prisma +0ms
+prisma:getSchema Checking 
+existence of C:\Users\admin\D
+ocuments\Pos-Project-v2\prism
+a\schema.prisma +0ms
+prisma:getSchema Reading 
+schema from single file C:\Us
+ers\admin\Documents\Pos-Proje
+ct-v2\prisma\schema.prisma 
++1ms
+prisma:getSchema Reading 
+schema from multiple files C:
+\Users\admin\Documents\Pos-Pr
+oject-v2\prisma\schema +1ms
+prisma:loadEnv project root 
+found at C:\Users\admin\Docum
+ents\Pos-Project-v2\package.j
+son +1ms
+prisma:getSchema 
+prismaConfig {
+  "data": {
+    "seed": "tsx 
+prisma/seed.ts"
+  },
+  "packagePath": "C:\\Users\\
+admin\\Documents\\Pos-Project
+-v2\\package.json"
+} +1ms
+prisma:tryLoadEnv 
+Environment variables loaded 
+from C:\Users\admin\Documents
+\Pos-Project-v2\.env +0ms
+prisma:getConfig Using 
+getConfig Wasm +1ms
+prisma:getConfig config data 
+retrieved without errors in 
+getConfig Wasm +9ms
+prisma:loadEnv project root 
+found at C:\Users\admin\Docum
+ents\Pos-Project-v2\package.j
+son +0ms
+prisma:getSchema 
+prismaConfig {
+  "data": {
+    "seed": "tsx 
+prisma/seed.ts"
+  },
+  "packagePath": "C:\\Users\\
+admin\\Documents\\Pos-Project
+-v2\\package.json"
+} +1ms
+prisma:tryLoadEnv 
+Environment variables loaded 
+from C:\Users\admin\Documents
+\Pos-Project-v2\.env +0ms
+Environment variables loaded from .env
+prisma:getSchema Reading 
+schema from single file C:\Us
+ers\admin\Documents\Pos-Proje
+ct-v2\prisma\schema.prisma 
++1ms
+Prisma schema loaded from prisma\schema.prisma
+prisma:getSchema Reading 
+schema from single file C:\Us
+ers\admin\Documents\Pos-Proje
+ct-v2\prisma\schema.prisma 
++2ms
+prisma:getConfig Using 
+getConfig Wasm +0ms
+prisma:getConfig config data 
+retrieved without errors in 
+getConfig Wasm +2ms
+Datasource "db": PostgreSQL database "postgres", schema "public" at "aws-1-ap-northeast-1.pooler.supabase.com:6543"
+prisma:getSchema Reading 
+schema from single file C:\Us
+ers\admin\Documents\Pos-Proje
+ct-v2\prisma\schema.prisma 
++1ms
+prisma:getConfig Using 
+getConfig Wasm +1ms
+prisma:getConfig config data 
+retrieved without errors in 
+getConfig Wasm +2ms
