@@ -57,7 +57,7 @@ export default function OrderPage() {
         setIsPaymentModalOpen(true);
     };
 
-    const handlePaymentComplete = (paymentMethod: 'cash' | 'transfer') => {
+    const handlePaymentComplete = (paymentMethod: 'cash') => {
         const orderData = {
             items: [...items],
             total: total(),

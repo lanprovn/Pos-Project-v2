@@ -104,18 +104,7 @@ async function main() {
                 categoryName: item.category,
                 image: item.image,
                 stock: 999,
-                options: (item.category === 'COFFEE' || item.category === 'SINH TỐ' || item.category === 'NƯỚC GIẢI KHÁT') ? JSON.stringify([
-                    {
-                        id: "opt_size",
-                        name: "Size",
-                        type: "single",
-                        required: true,
-                        values: [
-                            { name: "M", price: 0 },
-                            { name: "L", price: 5000 },
-                        ]
-                    }
-                ]) : "[]"
+                options: "[]"
             }
         });
     }

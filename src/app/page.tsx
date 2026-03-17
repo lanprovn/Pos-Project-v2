@@ -119,7 +119,16 @@ export default function POSPage() {
 
   const handleProductClick = (product: Product) => {
     if (product.stock <= 0) return;
-    if (product.options && product.options.length > 0) {
+    
+    // Parse options if string
+    const opts = Array.isArray(product.options) 
+      ? product.options 
+      : (typeof product.options === 'string' ? JSON.parse(product.options) : []);
+    
+    // Filter out sizes
+    const filteredOpts = opts.filter((o: any) => !['Size', 'Kích thước'].includes(o.name));
+    
+    if (filteredOpts.length > 0) {
       setEditingCartId(null);
       setSelectedProductForOptions(product);
     } else {
@@ -194,7 +203,7 @@ export default function POSPage() {
     }
   };
 
-  const handlePaymentComplete = async (paymentMethod: 'cash' | 'transfer') => {
+  const handlePaymentComplete = async (paymentMethod: 'cash') => {
     if (items.length === 0) return;
 
     let result;
@@ -672,11 +681,11 @@ export default function POSPage() {
                             </div>
                             <div className="flex-1 overflow-hidden">
                               <h4 className="font-medium text-xs md:text-sm line-clamp-1">{item.name}</h4>
-                              {item.selectedOptions && item.selectedOptions.length > 0 && (
-                                <p className="text-[10px] text-muted-foreground line-clamp-1">
-                                  {item.selectedOptions.map(o => o.name).join(", ")}
-                                </p>
-                              )}
+                                {item.selectedOptions && item.selectedOptions.filter(o => !['Size', 'Kích thước'].includes(o.name)).length > 0 && (
+                                  <p className="text-[10px] text-muted-foreground line-clamp-1">
+                                    {item.selectedOptions.filter(o => !['Size', 'Kích thước'].includes(o.name)).map(o => o.name).join(", ")}
+                                  </p>
+                                )}
                               {item.note && (
                                 <div className="bg-yellow-100/50 text-yellow-800 text-[10px] px-2 py-0.5 rounded-md mt-1 flex items-center gap-1">
                                   <MessageSquare size={10} />

@@ -26,9 +26,10 @@ export function ProductOptionsModal({
 }: ProductOptionsModalProps) {
     // State is initialized directly from props.
     // In POS Page, we use a different 'key' for the modal to force a remount when product changes.
-    const normalizedOptions: ProductOption[] = Array.isArray(product?.options) 
+    const normalizedOptions: ProductOption[] = (Array.isArray(product?.options) 
         ? product?.options 
-        : (typeof product?.options === 'string' ? JSON.parse(product.options as any) : []);
+        : (typeof product?.options === 'string' ? JSON.parse(product.options as any) : [])
+    ).filter((opt: ProductOption) => !['Size', 'Kích thước'].includes(opt.name));
 
     const [selectedOptions, setSelectedOptions] = useState<OptionValue[]>(() => {
         if (mode === 'edit') return initialOptions;

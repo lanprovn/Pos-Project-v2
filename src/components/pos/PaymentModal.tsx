@@ -13,7 +13,7 @@ interface PaymentModalProps {
     subtotal: number;
     discount: number;
     totalAmount: number;
-    onComplete: (paymentMethod: 'cash' | 'transfer') => void;
+    onComplete: (paymentMethod: 'cash') => void;
     mode?: 'pos' | 'kiosk';
 }
 
@@ -23,7 +23,7 @@ interface PaymentModalProps {
  */
 export function PaymentModal({ isOpen, onClose, subtotal, discount, totalAmount, onComplete, mode = 'pos' }: PaymentModalProps) {
     const { payment } = useSettingsStore();
-    const [paymentMethod, setPaymentMethod] = useState<'cash' | 'transfer'>('cash');
+    const [paymentMethod] = useState<'cash'>('cash');
     const [cashReceived, setCashReceived] = useState<string>('');
 
     if (!isOpen) return null;
@@ -41,12 +41,10 @@ export function PaymentModal({ isOpen, onClose, subtotal, discount, totalAmount,
     ].filter((v, i, a) => a.indexOf(v) === i && v >= totalAmount).sort((a, b) => a - b);
 
     const canComplete =
-        paymentMethod === 'transfer' ||
         (mode === 'kiosk' && paymentMethod === 'cash') ||
         (mode === 'pos' && paymentMethod === 'cash' && numericCashReceived >= totalAmount);
 
-    // VietQR URL
-    const qrUrl = `https://img.vietqr.io/image/${payment.bankId}-${payment.accountNumber}-compact.png?amount=${totalAmount}&addInfo=POS Payment&accountName=${encodeURIComponent(payment.accountName)}`;
+    // QR logic removed
 
     return (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
@@ -111,95 +109,51 @@ export function PaymentModal({ isOpen, onClose, subtotal, discount, totalAmount,
                 {/* Right Side: Payment Methods */}
                 <div className="flex-1 flex flex-col bg-white">
                     {/* Tabs */}
-                    <div className="flex border-b border-black/5">
-                        <button
-                            onClick={() => setPaymentMethod('cash')}
-                            className={cn(
-                                "flex-1 py-6 flex flex-col items-center gap-2 transition-all border-b-2",
-                                paymentMethod === 'cash'
-                                    ? "border-primary text-primary bg-primary/5"
-                                    : "border-transparent hover:bg-secondary/50 text-muted-foreground"
-                            )}
-                        >
-                            <Wallet size={24} />
-                            <span className="font-bold">{mode === 'kiosk' ? 'Tại quầy (Tiền mặt)' : 'Tiền mặt'}</span>
-                        </button>
-                        <button
-                            onClick={() => setPaymentMethod('transfer')}
-                            className={cn(
-                                "flex-1 py-6 flex flex-col items-center gap-2 transition-all border-b-2",
-                                paymentMethod === 'transfer'
-                                    ? "border-primary text-primary bg-primary/5"
-                                    : "border-transparent hover:bg-secondary/50 text-muted-foreground"
-                            )}
-                        >
-                            <QrCode size={24} />
-                            <span className="font-bold">Chuyển khoản</span>
-                        </button>
-                    </div>
+                    {/* Payment methods tabs removed - force Cash only */}
 
                     {/* Checkbox Content */}
                     <div className="flex-1 p-4 md:p-8 overflow-y-auto">
-                        {paymentMethod === 'cash' ? (
-                            mode === 'pos' ? (
-                                <div className="space-y-8 max-w-md mx-auto">
-                                    <div>
-                                        <label className="block text-sm font-medium text-muted-foreground mb-2">Nhập số tiền khách đưa</label>
-                                        <div className="relative">
-                                            <input
-                                                type="text"
-                                                autoFocus
-                                                className="w-full text-3xl font-bold p-4 rounded-xl border border-black/10 focus:outline-none focus:ring-4 focus:ring-primary/20 bg-secondary/20"
-                                                placeholder="0"
-                                                value={cashReceived ? parseInt(cashReceived).toLocaleString('de-DE') : ''}
-                                                onChange={(e) => {
-                                                    const val = e.target.value.replace(/\./g, '');
-                                                    if (!isNaN(Number(val))) setCashReceived(val);
-                                                }}
-                                            />
-                                            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground font-bold">₫</span>
-                                        </div>
+                        {mode === 'pos' ? (
+                            <div className="space-y-8 max-w-md mx-auto">
+                                <div>
+                                    <label className="block text-sm font-medium text-muted-foreground mb-2">Nhập số tiền khách đưa</label>
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            autoFocus
+                                            className="w-full text-3xl font-bold p-4 rounded-xl border border-black/10 focus:outline-none focus:ring-4 focus:ring-primary/20 bg-secondary/20"
+                                            placeholder="0"
+                                            value={cashReceived ? parseInt(cashReceived).toLocaleString('de-DE') : ''}
+                                            onChange={(e) => {
+                                                const val = e.target.value.replace(/\./g, '');
+                                                if (!isNaN(Number(val))) setCashReceived(val);
+                                            }}
+                                        />
+                                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground font-bold">₫</span>
                                     </div>
+                                </div>
 
-                                    <div className="grid grid-cols-2 gap-3">
-                                        {suggestions.slice(0, 4).map((amount) => (
-                                            <button
-                                                key={amount}
-                                                onClick={() => setCashReceived(amount.toString())}
-                                                className="py-3 px-4 rounded-xl border border-black/10 hover:border-primary hover:bg-primary/5 hover:text-primary transition-all font-medium"
-                                            >
-                                                {formatCurrency(amount)}
-                                            </button>
-                                        ))}
-                                    </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {suggestions.slice(0, 4).map((amount) => (
+                                        <button
+                                            key={amount}
+                                            onClick={() => setCashReceived(amount.toString())}
+                                            className="py-3 px-4 rounded-xl border border-black/10 hover:border-primary hover:bg-primary/5 hover:text-primary transition-all font-medium"
+                                        >
+                                            {formatCurrency(amount)}
+                                        </button>
+                                    ))}
                                 </div>
-                            ) : (
-                                <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
-                                    <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-4">
-                                        <Wallet size={48} />
-                                    </div>
-                                    <h3 className="text-2xl font-bold text-slate-800">Thanh toán tại quầy</h3>
-                                    <p className="text-muted-foreground max-w-xs">
-                                        Vui lòng nhấn &quot;Hoàn tất đặt đơn&quot; và thanh toán tại quầy thu ngân.
-                                    </p>
-                                </div>
-                            )
+                            </div>
                         ) : (
-                            <div className="flex flex-col items-center justify-center h-full space-y-6">
-                                <div className="bg-white p-4 rounded-2xl shadow-lg border border-black/5 relative w-72 h-72">
-                                    <Image
-                                        src={qrUrl}
-                                        alt="VietQR"
-                                        fill
-                                        className="object-contain"
-                                        unoptimized
-                                    />
+                            <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
+                                <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-4">
+                                    <Wallet size={48} />
                                 </div>
-                                <div className="text-center space-y-1">
-                                    <p className="font-bold text-lg">{payment.accountName}</p>
-                                    <p className="text-muted-foreground">{payment.bankName} - {payment.accountNumber}</p>
-                                    <p className="font-bold text-primary text-xl mt-2">{formatCurrency(totalAmount)}</p>
-                                </div>
+                                <h3 className="text-2xl font-bold text-slate-800">Thanh toán tại quầy</h3>
+                                <p className="text-muted-foreground max-w-xs">
+                                    Vui lòng nhấn &quot;Hoàn tất đặt đơn&quot; và thanh toán tại quầy thu ngân.
+                                </p>
                             </div>
                         )}
                     </div>

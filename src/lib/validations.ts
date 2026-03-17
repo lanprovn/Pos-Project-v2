@@ -49,7 +49,7 @@ export const createOrderSchema = z.object({
     subtotal: z.number().min(0),
     total: z.number().min(0),
     discount: z.number().min(0).max(100),
-    paymentMethod: z.string(),
+    paymentMethod: z.literal("cash"),
     diningOption: z.enum(["dine-in", "take-away"]),
     tableId: z.string().optional().nullable(),
     customerId: z.string().optional().nullable(),
@@ -58,7 +58,7 @@ export const createOrderSchema = z.object({
 export const updatePaymentStatusSchema = z.object({
     orderId: z.string(),
     status: z.string(),
-    paymentMethod: z.string().optional()
+    paymentMethod: z.literal("cash").optional()
 });
 
 export const updateOrderStatusSchema = z.object({

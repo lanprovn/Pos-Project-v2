@@ -183,64 +183,7 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="grid grid-cols-1 gap-8 max-w-6xl mt-8">
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 }}
-                        className="bg-white p-8 rounded-3xl border border-black/5 shadow-sm"
-                    >
-                        <div className="flex items-center gap-3 mb-6 pb-4 border-b border-black/5">
-                            <div className="p-2 bg-emerald-500/10 rounded-xl">
-                                <CreditCard className="text-emerald-500 w-6 h-6" />
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-bold">Cấu hình Thanh toán (QR Code)</h3>
-                                <p className="text-sm text-muted-foreground">Thông tin ngân hàng để tạo mã QR chuyển khoản VietQR.</p>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label className="text-sm font-medium text-muted-foreground mb-1 block">Tên Ngân hàng</label>
-                                <input
-                                    type="text"
-                                    className="w-full px-4 py-3 rounded-xl border border-black/10 focus:outline-none focus:ring-2 focus:ring-primary/50 bg-secondary/30"
-                                    value={payment.bankName}
-                                    onChange={(e) => updatePaymentSettings({ bankName: e.target.value })}
-                                    placeholder="VD: MBBank, Vietcombank"
-                                />
-                            </div>
-                            <div>
-                                <label className="text-sm font-medium text-muted-foreground mb-1 block">Mã Ngân hàng (BIN/BankID)</label>
-                                <input
-                                    type="text"
-                                    className="w-full px-4 py-3 rounded-xl border border-black/10 focus:outline-none focus:ring-2 focus:ring-primary/50 bg-secondary/30"
-                                    value={payment.bankId}
-                                    onChange={(e) => updatePaymentSettings({ bankId: e.target.value })}
-                                    placeholder="VD: 970422 hoặc MB"
-                                />
-                                <p className="text-xs text-muted-foreground mt-1">Dùng &quot;MB&quot;, &quot;VCB&quot;, &quot;ACB&quot;... cho VietQR API.</p>
-                            </div>
-                            <div>
-                                <label className="text-sm font-medium text-muted-foreground mb-1 block">Số Tài khoản</label>
-                                <input
-                                    type="text"
-                                    className="w-full px-4 py-3 rounded-xl border border-black/10 focus:outline-none focus:ring-2 focus:ring-primary/50 bg-secondary/30 font-mono tracking-wide"
-                                    value={payment.accountNumber}
-                                    onChange={(e) => updatePaymentSettings({ accountNumber: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                <label className="text-sm font-medium text-muted-foreground mb-1 block">Tên Chủ Tài khoản</label>
-                                <input
-                                    type="text"
-                                    className="w-full px-4 py-3 rounded-xl border border-black/10 focus:outline-none focus:ring-2 focus:ring-primary/50 bg-secondary/30 uppercase"
-                                    value={payment.accountName}
-                                    onChange={(e) => updatePaymentSettings({ accountName: e.target.value })}
-                                />
-                            </div>
-                        </div>
-                    </motion.div>
+                {/* Payment settings removed - Cash only system */}
                 </div>
 
                 <div className="mt-8 max-w-6xl flex justify-between items-center bg-white/50 backdrop-blur-sm p-4 rounded-2xl border border-white/20">

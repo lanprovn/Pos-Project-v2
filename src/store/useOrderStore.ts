@@ -14,7 +14,7 @@ export interface Order {
     cancelledAt?: string;
     cancelledBy?: string;
     fulfillmentStatus: 'pending' | 'preparing' | 'ready' | 'delivered';
-    paymentMethod: 'cash' | 'transfer' | 'card';
+    paymentMethod: 'cash';
     diningOption: 'dine-in' | 'take-away';
     tableId?: string;
 }
