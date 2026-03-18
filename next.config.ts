@@ -7,6 +7,7 @@ const withPWA = require('next-pwa')({
 });
 
 const nextConfig: NextConfig = {
+  turbopack: {}, // Silences the warning/error about missing turbopack config when webpack is present
   images: {
     remotePatterns: [
       {
