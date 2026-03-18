@@ -415,34 +415,37 @@ export default function POSPage() {
       </AnimatePresence>
 
       <main className="flex-1 flex flex-col p-4 md:p-8 overflow-hidden">
-        <header className="flex flex-col md:flex-row items-stretch md:items-center gap-4 md:gap-8 mb-6 md:mb-10">
-          <div className="flex items-center gap-4 lg:hidden">
-            <button 
-              onClick={() => setIsMobileSidebarOpen(true)}
-              className="p-3 bg-white shadow-sm border border-black/5 rounded-2xl hover:bg-secondary transition-all"
-            >
-              <LayoutGrid size={24} className="text-primary" />
-            </button>
-            <h1 className="text-xl font-black bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-600">Lân Coffee</h1>
-          </div>
-          <div className="flex-1 relative">
-            <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground/60" />
-            <input
-              type="text"
-              placeholder="Hôm nay bạn muốn uống gì?..."
-              className="w-full bg-white/60 backdrop-blur-md border border-black/5 shadow-sm rounded-[1.2rem] md:rounded-[1.5rem] py-3 md:py-4 pl-12 md:pl-14 pr-6 focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all text-base md:text-lg font-medium"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <div className="flex items-center gap-4">
+        <header className="flex flex-col gap-4 mb-6 md:mb-10">
+          {/* Top Bar for Mobile/Desktop */}
+          <div className="flex items-center gap-3 md:gap-8">
+            <div className="flex items-center gap-3 lg:hidden">
+              <button 
+                onClick={() => setIsMobileSidebarOpen(true)}
+                className="p-2.5 bg-white/80 backdrop-blur-md shadow-sm border border-black/5 rounded-2xl hover:bg-secondary transition-all active:scale-90"
+              >
+                <LayoutGrid size={22} className="text-primary" />
+              </button>
+              <h1 className="text-lg font-black bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-600 truncate max-w-[120px]">Lân Coffee</h1>
+            </div>
+
+            <div className="flex-1 relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
+              <input
+                type="text"
+                placeholder="Tìm món ngon..."
+                className="w-full bg-white/70 backdrop-blur-md border border-black/5 shadow-sm rounded-2xl py-2.5 md:py-3.5 pl-11 pr-4 focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all text-sm md:text-base font-medium"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+
             <button
               onClick={() => setIsRecentOrdersDrawerOpen(true)}
-              className="flex-1 md:flex-none justify-center bg-white border border-black/5 shadow-sm px-4 md:px-6 py-3 md:py-4 rounded-[1.2rem] text-sm font-bold flex items-center gap-2 hover:bg-secondary/50 transition-all active:scale-95"
+              className="bg-white/70 backdrop-blur-md border border-black/5 shadow-sm p-2.5 md:px-5 md:py-3.5 rounded-2xl text-xs md:text-sm font-bold flex items-center gap-2 hover:bg-secondary/50 transition-all active:scale-95 shrink-0"
             >
               <History size={18} className="text-primary" />
-              <span className="hidden sm:inline">Lịch sử đơn</span>
-              <span className="sm:hidden text-xs">Lịch sử</span>
+              <span className="hidden md:inline">Lịch sử đơn</span>
+              <span className="md:hidden">Lịch sử</span>
             </button>
           </div>
         </header>
@@ -508,23 +511,38 @@ export default function POSPage() {
           </div>
         </div>
 
-        {/* Mobile View Cart Button */}
-        <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-30 w-[90%] max-w-sm">
-          <button
+        {/* Floating Cart Button for Mobile */}
+        <div className="lg:hidden fixed bottom-8 left-1/2 -translate-x-1/2 z-[40] w-full px-5 max-w-sm">
+          <motion.button
+            initial={{ y: 50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => setIsMobileCartOpen(true)}
-            className="w-full bg-primary text-white font-bold py-4 rounded-2xl flex items-center justify-between px-6 shadow-2xl shadow-primary/40 active:scale-95 transition-all"
+            className={cn(
+              "w-full bg-primary/95 backdrop-blur-xl text-white font-bold py-3.5 rounded-[2rem] flex items-center justify-between px-6 shadow-[0_20px_50px_-12px_rgba(59,130,246,0.5)] border border-white/20 relative overflow-hidden",
+              items.length === 0 && "opacity-80 saturate-[0.8]"
+            )}
           >
+            {/* Shimmer effect overlay */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-shimmer" />
+            
             <div className="flex items-center gap-3">
-              <div className="bg-white/20 p-2 rounded-lg">
-                <ShoppingCart size={20} />
+              <div className="bg-white/20 p-2 rounded-xl">
+                <ShoppingCart size={20} className="stroke-[2.5]" />
               </div>
-              <span>Xem giỏ hàng</span>
+              <span className="text-sm tracking-tight">Xem giỏ hàng</span>
             </div>
+            
             <div className="flex flex-col items-end">
-              <span className="text-[10px] opacity-80 uppercase font-black">{items.reduce((a, b) => a + b.quantity, 0)} món</span>
-              <span className="text-base">{formatCurrency(total())}</span>
+              <div className="flex items-center gap-1.5 px-2 py-0.5 bg-white/20 rounded-lg mb-0.5">
+                <span className="text-[10px] uppercase font-black tracking-widest leading-none">
+                  {items.reduce((a, b) => a + b.quantity, 0)} món
+                </span>
+                <ChevronRight size={10} className="stroke-[3]" />
+              </div>
+              <span className="text-base font-black tracking-tight">{formatCurrency(total())}</span>
             </div>
-          </button>
+          </motion.button>
         </div>
       </main>
 
