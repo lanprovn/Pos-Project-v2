@@ -81,15 +81,16 @@ export function ProductOptionsModal({
 
     return (
         <AnimatePresence>
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4">
                 <motion.div
-                    initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    className="bg-white w-full max-w-lg rounded-none sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col h-[100dvh] sm:h-auto sm:max-h-[90vh]"
+                    initial={{ opacity: 0, y: 100 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 100 }}
+                    transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                    className="bg-white w-full max-w-lg rounded-t-[3rem] sm:rounded-[3rem] shadow-2xl overflow-hidden flex flex-col h-[90dvh] sm:h-auto sm:max-h-[90vh] mt-auto sm:mt-0 relative"
                 >
-                    {/* Header with Image */}
-                    <div className="relative h-40 md:h-48 bg-secondary shrink-0">
+                    {/* Header with Image - Deep refinement */}
+                    <div className="relative h-56 md:h-64 bg-gray-100 shrink-0">
                         <Image
                             src={product.image}
                             alt={product.name}
@@ -97,111 +98,126 @@ export function ProductOptionsModal({
                             className="object-cover"
                             unoptimized
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-4 md:p-6">
-                            <div className="text-white">
-                                <h2 className="text-xl md:text-2xl font-bold">{product.name}</h2>
-                                <p className="text-white/80 font-medium text-sm md:text-base">{formatCurrency(basePrice)}</p>
+                        <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/90 via-black/40 to-transparent flex items-end p-8 md:p-10">
+                            <div className="text-white w-full">
+                                <span className="inline-block px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-widest mb-3 border border-white/20">Sản phẩm chất lượng</span>
+                                <h2 className="text-2xl md:text-4xl font-black tracking-tighter leading-tight mb-1">{product.name}</h2>
+                                <p className="text-primary text-xl font-black">{formatCurrency(basePrice)}</p>
                             </div>
                         </div>
                         <button
                             onClick={onClose}
-                            className="absolute top-4 right-4 bg-black/20 hover:bg-black/40 text-white p-2 rounded-full backdrop-blur-md transition-colors"
+                            className="absolute top-6 right-6 bg-white/10 hover:bg-white/20 text-white p-3 rounded-full backdrop-blur-xl transition-all border border-white/10 active:scale-90"
                         >
-                            <X size={20} />
+                            <X size={24} strokeWidth={2.5} />
                         </button>
                     </div>
 
-                    {/* Options List */}
-                    <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
+                    {/* Options List - Premium list items */}
+                    <div className="flex-1 overflow-y-auto p-6 md:p-10 space-y-10 bg-gray-50/30">
                         {normalizedOptions && normalizedOptions.length > 0 ? (
                             normalizedOptions.map((option) => (
-                                <div key={option.id}>
-                                    <h3 className="font-bold text-sm text-muted-foreground uppercase tracking-wider mb-3">
-                                        {option.name} {option.required && <span className="text-destructive">*</span>}
-                                    </h3>
-                                    <div className="grid grid-cols-1 gap-2">
+                                <div key={option.id} className="space-y-4">
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <div className="w-1.5 h-6 bg-primary rounded-full" />
+                                        <h3 className="font-black text-sm text-slate-800 uppercase tracking-widest">
+                                            {option.name} {option.required && <span className="text-red-500">*</span>}
+                                        </h3>
+                                    </div>
+                                    <div className="grid grid-cols-1 gap-3">
                                         {option.values.map((val) => {
                                             const selected = isOptionSelected(val);
                                             return (
-                                                <div
+                                                <motion.div
                                                     key={val.name}
+                                                    whileTap={{ scale: 0.98 }}
                                                     onClick={() => handleOptionToggle(option, val)}
                                                     className={cn(
-                                                        "flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all",
+                                                        "group flex items-center justify-between p-5 rounded-[2rem] border-2 transition-all duration-300 cursor-pointer",
                                                         selected
-                                                            ? "border-primary bg-primary/5 shadow-md shadow-primary/10"
-                                                            : "border-black/5 hover:bg-secondary"
+                                                            ? "border-primary bg-primary/[0.03] shadow-xl shadow-primary/5"
+                                                            : "border-black/[0.03] bg-white hover:border-primary/30"
                                                     )}
                                                 >
-                                                    <div className="flex items-center gap-3">
+                                                    <div className="flex items-center gap-4">
                                                         <div className={cn(
-                                                            "w-5 h-5 rounded-full border flex items-center justify-center transition-colors",
-                                                            option.type === 'single' ? "rounded-full" : "rounded-md",
-                                                            selected ? "bg-primary border-primary" : "border-black/20 bg-white"
+                                                            "w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all duration-500",
+                                                            option.type === 'single' ? "rounded-full" : "rounded-xl",
+                                                            selected 
+                                                                ? "bg-primary border-primary rotate-0 scale-100" 
+                                                                : "border-black/5 bg-gray-50 -rotate-90 scale-90"
                                                         )}>
-                                                            {selected && <Check size={12} className="text-white" />}
+                                                            {selected && <Check size={16} className="text-white stroke-[3px]" />}
                                                         </div>
-                                                        <span className={cn("font-medium", selected && "text-primary")}>
+                                                        <span className={cn("text-lg font-bold tracking-tight transition-colors", selected ? "text-primary" : "text-slate-600")}>
                                                             {val.name}
                                                         </span>
                                                     </div>
-                                                    <span className="text-sm font-semibold text-muted-foreground">
-                                                        {val.price > 0 ? `+${formatCurrency(val.price)}` : 'Miễn phí'}
+                                                    <span className={cn("text-sm font-black px-4 py-2 rounded-2xl transition-all", 
+                                                        selected ? "bg-primary/10 text-primary" : "bg-gray-100 text-muted-foreground")}>
+                                                        {val.price > 0 ? `+${formatCurrency(val.price)}` : 'Free'}
                                                     </span>
-                                                </div>
+                                                </motion.div>
                                             );
                                         })}
                                     </div>
                                 </div>
                             ))
                         ) : (
-                            <div className="text-center text-muted-foreground py-8">
-                                <p>Sản phẩm này không có tùy chọn thêm.</p>
+                            <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
+                                <div className="p-6 bg-gray-100 rounded-full text-gray-400">
+                                    <Plus size={32} className="rotate-45" />
+                                </div>
+                                <div>
+                                    <p className="text-slate-800 font-black text-lg">Món cơ bản</p>
+                                    <p className="text-muted-foreground text-sm">Sản phẩm này không có tùy chọn thêm.</p>
+                                </div>
                             </div>
                         )}
                     </div>
 
-                    {/* Footer Controls */}
-                    <div className="p-4 md:p-6 border-t border-black/5 bg-secondary/30 space-y-4 shrink-0">
-                        {/* Quantity */}
-                        {mode === 'add' && (
-                            <div className="flex items-center justify-between bg-white p-2 rounded-xl border border-black/5">
-                                <span className="font-medium text-sm text-muted-foreground ml-2">Số lượng</span>
-                                <div className="flex items-center gap-3">
-                                    <button
-                                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                                        className="w-8 h-8 rounded-lg bg-secondary hover:bg-black/5 flex items-center justify-center transition-colors"
-                                    >
-                                        <Minus size={16} />
-                                    </button>
-                                    <span className="font-bold w-6 text-center">{quantity}</span>
-                                    <button
-                                        onClick={() => setQuantity(quantity + 1)}
-                                        className="w-8 h-8 rounded-lg bg-secondary hover:bg-black/5 flex items-center justify-center transition-colors"
-                                    >
-                                        <Plus size={16} />
-                                    </button>
-                                </div>
+                    {/* Footer Controls - Elite Checkout Feel */}
+                    <div className="p-8 md:p-10 border-t border-black/[0.03] bg-white backdrop-blur-xl space-y-6 shrink-0 shadow-[0_-20px_40px_rgba(0,0,0,0.02)]">
+                        {/* Quantity with new ultra-premium selector */}
+                        <div className="flex items-center justify-between">
+                            <div className="flex flex-col">
+                                <span className="font-black text-xs uppercase tracking-widest text-muted-foreground mb-1">Số lượng đặt</span>
+                                <span className="text-2xl font-black tracking-tighter">Chọn số lượng</span>
                             </div>
-                        )}
+                            <div className="flex items-center gap-2 bg-gray-100 p-2 rounded-[2rem]">
+                                <button
+                                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                                    className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all active:scale-90"
+                                >
+                                    <Minus size={20} strokeWidth={3} />
+                                </button>
+                                <span className="font-black text-2xl w-12 text-center tabular-nums">{quantity}</span>
+                                <button
+                                    onClick={() => setQuantity(quantity + 1)}
+                                    className="w-12 h-12 rounded-full bg-primary text-white shadow-lg shadow-primary/20 flex items-center justify-center hover:bg-primary/90 transition-all active:scale-95"
+                                >
+                                    <Plus size={20} strokeWidth={3} />
+                                </button>
+                            </div>
+                        </div>
 
-                        {/* Add/Update Button */}
+                        {/* Add/Update Button - Shimmering Premium */}
                         <button
                             onClick={handleConfirm}
-                            className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-3 md:py-4 rounded-xl shadow-lg shadow-primary/20 flex items-center justify-between px-4 md:px-6 transition-all active:scale-[0.98]"
+                            className="w-full bg-primary hover:bg-primary/90 text-white font-black py-5 rounded-[2.5rem] shadow-[0_20px_40px_-10px_rgba(59,130,246,0.3)] flex items-center justify-between px-10 transition-all active:scale-[0.98] group relative overflow-hidden"
                         >
-                            <span className="text-base md:text-lg">{mode === 'edit' ? 'Cập nhật món' : 'Thêm vào giỏ'}</span>
-                            <div className="flex items-center gap-2">
-                                <span className="text-[10px] md:text-sm font-normal opacity-80 decoration-slice">
-                                    {quantity} x {formatCurrency(unitPrice)} =
-                                </span>
-                                <span className="text-lg md:text-xl">{formatCurrency(totalPrice)}</span>
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-shimmer" />
+                            <span className="text-xl tracking-tight">{mode === 'edit' ? 'Cập nhật món' : 'Thêm vào đơn'}</span>
+                            <div className="flex flex-col items-end">
+                                <div className="text-[10px] uppercase font-black opacity-60 tracking-widest leading-none mb-1">Tổng cộng</div>
+                                <div className="text-2xl tracking-tighter">{formatCurrency(totalPrice)}</div>
                             </div>
                         </button>
                     </div>
                 </motion.div>
             </div>
         </AnimatePresence>
+
     );
 }
 
