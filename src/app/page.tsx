@@ -467,43 +467,47 @@ export default function POSPage() {
           ))}
         </div>
 
-        <div className="flex-1 overflow-y-auto pr-2 md:pr-4 scrollbar-hide">
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-3 md:gap-6 pb-24 md:pb-10">
+        <div className="flex-1 overflow-y-auto scrollbar-hide -mr-2 pr-2 md:mr-0 md:pr-0">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3 sm:gap-4 md:gap-6 pb-32 md:pb-10">
             {filteredProducts.map((product) => (
               <motion.div
                 layout
                 key={product.id}
-                whileHover={{ y: -4 }}
+                whileHover={{ y: -4, scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 className={cn(
-                  "bg-white border border-black/5 rounded-2xl overflow-hidden hover:border-primary/50 shadow-sm hover:shadow-md transition-all group cursor-pointer relative",
+                  "bg-white border border-black/[0.03] rounded-3xl overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] transition-all duration-300 group cursor-pointer relative flex flex-col h-full",
                   product.stock === 0 && "opacity-50 cursor-not-allowed grayscale"
                 )}
                 onClick={() => handleProductClick(product)}
               >
-                <div className="aspect-square sm:aspect-video relative overflow-hidden">
+                <div className="aspect-[4/3] sm:aspect-video relative overflow-hidden bg-gray-50">
                   <Image
                     src={product.image}
                     alt={product.name}
                     fill
-                    className="object-cover group-hover:scale-110 transition-transform duration-500"
+                    className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                     unoptimized
                   />
                   {product.stock > 0 ? (
-                    <div className="absolute inset-0 bg-black/20 opacity-0 md:group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <Plus className="text-white w-8 h-8" />
+                    <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <div className="bg-white/90 backdrop-blur-md p-2 rounded-full scale-75 group-hover:scale-100 transition-transform">
+                        <Plus className="text-primary w-6 h-6" />
+                      </div>
                     </div>
                   ) : (
-                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-10">
-                      <span className="text-white font-bold text-[10px] md:text-sm bg-destructive px-3 py-1 rounded-full uppercase tracking-wider">Hết hàng</span>
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10">
+                      <span className="text-white font-bold text-[10px] bg-destructive px-3 py-1 rounded-full uppercase tracking-wider shadow-lg">Hết</span>
                     </div>
                   )}
                 </div>
-                <div className="p-3 md:p-4">
-                  <div className="flex justify-between items-start mb-1">
-                    <h3 className="font-semibold text-xs md:text-sm h-8 md:h-10 line-clamp-2">{product.name}</h3>
-                  </div>
-                  <div className="flex justify-between items-end">
-                    <p className="text-primary font-bold text-sm md:text-base">{formatCurrency(product.price)}</p>
+                <div className="p-3 sm:p-4 flex flex-col flex-1">
+                  <h3 className="font-bold text-[13px] sm:text-sm leading-snug line-clamp-2 mb-2 group-hover:text-primary transition-colors">{product.name}</h3>
+                  <div className="mt-auto flex justify-between items-center">
+                    <p className="text-primary font-black text-sm sm:text-base">{formatCurrency(product.price)}</p>
+                    <div className="lg:hidden w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Plus size={14} className="text-primary" />
+                    </div>
                   </div>
                 </div>
               </motion.div>
@@ -562,20 +566,25 @@ export default function POSPage() {
             
             <motion.section 
               key="cart-section"
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              initial={{ x: '100%', opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: '100%', opacity: 0 }}
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
               className={cn(
-                "fixed lg:static top-0 right-0 h-full w-[90%] sm:w-96 border-l border-black/5 flex flex-col bg-white z-[50] shadow-2xl lg:shadow-none",
+                "fixed lg:static top-0 right-0 h-[100dvh] w-full sm:w-[420px] border-l border-black/5 flex flex-col bg-white z-[50] shadow-[-20px_0_50px_rgba(0,0,0,0.1)] lg:shadow-none lg:rounded-none rounded-l-[2.5rem] overflow-hidden",
                 !isMobileCartOpen && "hidden lg:flex"
               )}
             >
-              <div className="p-4 md:p-6 border-b border-black/5 flex justify-between items-center bg-white shrink-0">
-                <h2 className="text-lg md:text-xl font-bold flex items-center gap-2">
-                  <ShoppingCart className="w-5 h-5 text-primary" />
-                  Giỏ hàng ({items.reduce((a, b) => a + b.quantity, 0)})
-                </h2>
+              <div className="p-6 md:p-8 border-b border-black/[0.03] flex justify-between items-center bg-white shrink-0">
+                <div>
+                    <h2 className="text-xl md:text-2xl font-black flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center">
+                            <ShoppingCart className="w-5 h-5 text-primary" />
+                        </div>
+                        Giỏ hàng
+                    </h2>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Đang chọn {items.reduce((a, b) => a + b.quantity, 0)} sản phẩm</p>
+                </div>
                 <button 
                   onClick={() => setIsMobileCartOpen(false)}
                   className="lg:hidden p-2 hover:bg-secondary rounded-full"
@@ -683,47 +692,56 @@ export default function POSPage() {
                       items.map((item) => (
                         <React.Fragment key={item.cartId}>
                           <motion.div
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, scale: 0.9 }}
-                            className="flex items-center gap-3 md:gap-4 bg-secondary/50 p-2 md:p-3 rounded-xl border border-black/5"
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="group flex items-center gap-4 bg-gray-50/50 p-4 rounded-[2rem] border border-black/[0.03] hover:bg-white hover:shadow-xl hover:shadow-primary/5 transition-all duration-300"
                           >
-                            <div className="w-12 h-12 md:w-16 md:h-16 rounded-lg overflow-hidden relative shrink-0">
+                            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden relative shrink-0 shadow-sm">
                                <Image
                                 src={item.image ?? "/placeholder.png"}
                                 alt={item.name}
                                 fill
-                                className="object-cover"
+                                className="object-cover group-hover:scale-110 transition-transform duration-500"
                                 unoptimized
                               />
                             </div>
-                            <div className="flex-1 overflow-hidden">
-                              <h4 className="font-medium text-xs md:text-sm line-clamp-1">{item.name}</h4>
-                                {item.selectedOptions && item.selectedOptions.filter(o => !['Size', 'Kích thước'].includes(o.name)).length > 0 && (
-                                  <p className="text-[10px] text-muted-foreground line-clamp-1">
-                                    {item.selectedOptions.filter(o => !['Size', 'Kích thước'].includes(o.name)).map(o => o.name).join(", ")}
-                                  </p>
-                                )}
-                              {item.note && (
-                                <div className="bg-yellow-100/50 text-yellow-800 text-[10px] px-2 py-0.5 rounded-md mt-1 flex items-center gap-1">
-                                  <MessageSquare size={10} />
-                                  <span className="truncate">{item.note}</span>
+                            <div className="flex-1 min-w-0">
+                                <div className="flex justify-between items-start mb-1">
+                                    <h4 className="font-bold text-sm sm:text-base line-clamp-1 group-hover:text-primary transition-colors">{item.name}</h4>
+                                    <button onClick={() => removeItem(item.cartId)} className="text-red-400 p-1.5 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors ml-2">
+                                        <Trash2 size={16} />
+                                    </button>
                                 </div>
-                              )}
-                              <p className="text-primary text-xs md:text-sm font-bold mt-0.5">{formatCurrency(item.price)}</p>
-                              <div className="flex items-center gap-2 mt-1">
-                                <button onClick={() => updateQuantity(item.cartId, item.quantity - 1)} className="p-1 rounded-md bg-white border border-black/5 hover:bg-secondary/80 transition-colors"><Minus size={12} /></button>
-                                <span className="text-xs font-medium w-4 text-center">{item.quantity}</span>
-                                <button onClick={() => updateQuantity(item.cartId, item.quantity + 1)} className="p-1 rounded-md bg-white border border-black/5 hover:bg-secondary/80 transition-colors"><Plus size={12} /></button>
-                              </div>
-                            </div>
-                            <div className="flex flex-col gap-1 shrink-0">
-                              <button onClick={() => removeItem(item.cartId)} className="text-destructive p-2 hover:bg-destructive/5 rounded-lg transition-colors">
-                                <Trash2 size={16} />
-                              </button>
-                              <button onClick={() => handleEditCartItem(item.cartId)} className="text-primary p-2 hover:bg-primary/5 rounded-lg transition-colors">
-                                <Edit3 size={16} />
-                              </button>
+                                
+                                {item.selectedOptions && item.selectedOptions.filter(o => !['Size', 'Kích thước'].includes(o.name)).length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mb-2">
+                                    {item.selectedOptions.filter(o => !['Size', 'Kích thước'].includes(o.name)).map(o => (
+                                        <span key={o.name} className="text-[10px] bg-white border border-black/[0.05] px-2 py-0.5 rounded-full text-muted-foreground font-medium">
+                                            {o.name}
+                                        </span>
+                                    ))}
+                                  </div>
+                                )}
+                                
+                                <div className="flex items-center justify-between mt-3">
+                                    <p className="text-primary font-black text-sm">{formatCurrency(item.price)}</p>
+                                    <div className="flex items-center gap-1 bg-white border border-black/[0.05] p-1 rounded-xl shadow-sm">
+                                        <button 
+                                            onClick={() => updateQuantity(item.cartId, item.quantity - 1)} 
+                                            className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-secondary active:scale-90 transition-all font-bold"
+                                        >
+                                            <Minus size={14} />
+                                        </button>
+                                        <span className="text-sm font-black w-6 text-center">{item.quantity}</span>
+                                        <button 
+                                            onClick={() => updateQuantity(item.cartId, item.quantity + 1)} 
+                                            className="w-7 h-7 flex items-center justify-center rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white active:scale-90 transition-all font-bold"
+                                        >
+                                            <Plus size={14} />
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                           </motion.div>
                         </React.Fragment>
@@ -734,53 +752,70 @@ export default function POSPage() {
               </div>
 
               {/* Checkout Controls */}
-              <div className="p-4 md:p-6 border-t border-black/5 bg-secondary/30 mt-auto">
-                <div className="flex justify-between text-sm md:text-base mb-1">
-                  <span className="text-muted-foreground">Tạm tính</span>
-                  <span>{formatCurrency(subtotal())}</span>
+              <div className="p-6 md:p-8 border-t border-black/[0.03] bg-gray-50/30 backdrop-blur-sm mt-auto space-y-4">
+                <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground font-medium">Tạm tính</span>
+                        <span className="font-bold">{formatCurrency(subtotal())}</span>
+                    </div>
+                    {discount > 0 && (
+                        <div className="flex justify-between text-sm text-emerald-600">
+                            <span className="font-medium">Giảm giá</span>
+                            <span className="font-bold">-{formatCurrency(discount)}</span>
+                        </div>
+                    )}
+                    <div className="flex justify-between text-xl font-black pt-4 border-t border-black/[0.05]">
+                        <span>Tổng cộng</span>
+                        <span className="text-primary">{formatCurrency(total())}</span>
+                    </div>
                 </div>
-                <div className="flex justify-between text-lg md:text-xl font-bold mb-4 pt-4 border-t border-black/10">
-                  <span>Tổng cộng</span>
-                  <span className="text-primary">{formatCurrency(total())}</span>
-                </div>
-                <div className="flex flex-col gap-3">
+
+                <div className="grid grid-cols-2 gap-3">
                   {heldOrders.length > 0 && (
                     <button
                       onClick={() => setIsHeldOrdersListOpen(true)}
-                      className="w-full bg-orange-50 text-orange-600 border border-orange-100 py-3 rounded-xl flex items-center justify-center gap-2 font-bold text-sm hover:bg-orange-100 transition-all"
+                      className="bg-white border border-black/[0.05] p-4 rounded-3xl flex flex-col items-center justify-center gap-1 hover:bg-secondary transition-all shadow-sm active:scale-95"
                     >
-                      <History size={16} />
-                      Đơn hàng chờ ({heldOrders.length})
+                      <History size={20} className="text-orange-500" />
+                      <span className="text-[10px] font-black uppercase tracking-tighter">Đơn chờ ({heldOrders.length})</span>
                     </button>
                   )}
-                  {diningOption === 'dine-in' && (
+                  {diningOption === 'dine-in' ? (
                     <button
                       onClick={handleConfirmItems}
                       disabled={items.length === 0 || !selectedTableId}
-                      className="w-full py-3 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 font-bold text-sm hover:bg-blue-100 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+                      className={cn(
+                        "p-4 rounded-3xl flex flex-col items-center justify-center gap-1 transition-all shadow-sm active:scale-95",
+                        items.length === 0 || !selectedTableId ? "bg-gray-100 text-gray-400" : "bg-blue-500 text-white shadow-blue-500/20"
+                      )}
                     >
-                      <Save size={16} />
-                      Ghi món ({tables.find(t => t.id === selectedTableId)?.number || '?'})
+                      <Save size={20} />
+                      <span className="text-[10px] font-black uppercase tracking-tighter">Ghi món ({tables.find(t => t.id === selectedTableId)?.number || '?'})</span>
                     </button>
-                  ) || (
+                  ) : (
                     <button
                       onClick={handleHoldOrderClick}
                       disabled={items.length === 0}
-                      className="w-full py-3 rounded-xl bg-orange-50 text-orange-600 border border-orange-100 font-bold text-sm hover:bg-orange-100 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+                      className="bg-white border border-black/[0.05] p-4 rounded-3xl flex flex-col items-center justify-center gap-1 hover:bg-secondary transition-all shadow-sm active:scale-95 disabled:opacity-50"
                     >
-                      <Save size={16} />
-                      Lưu đơn (Tạm)
+                      <Save size={20} className="text-orange-500" />
+                      <span className="text-[10px] font-black uppercase tracking-tighter">Lưu đơn</span>
                     </button>
                   )}
-                  <button
+                </div>
+
+                <button
                     disabled={items.length === 0}
                     onClick={handleCheckoutClick}
-                    className="w-full bg-primary hover:bg-primary/90 disabled:opacity-50 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
-                  >
-                    <CreditCard size={18} />
-                    {activeOrderId ? "Thanh toán (Billing)" : "Thanh toán ngay"}
-                  </button>
-                </div>
+                    className="w-full bg-primary hover:bg-primary/90 disabled:opacity-50 text-white font-black py-4 rounded-[2rem] flex items-center justify-center gap-3 shadow-[0_20px_40px_-10px_rgba(59,130,246,0.3)] transition-all active:scale-[0.98] group overflow-hidden relative"
+                >
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-shimmer" />
+                    <CreditCard size={20} className="stroke-[2.5]" />
+                    <span className="text-lg">
+                        {activeOrderId ? "Thanh toán (Billing)" : "Thanh toán ngay"}
+                    </span>
+                    <ChevronRight size={18} className="stroke-[3] opacity-50 group-hover:translate-x-1 transition-transform" />
+                </button>
               </div>
             </motion.section>
           </>
